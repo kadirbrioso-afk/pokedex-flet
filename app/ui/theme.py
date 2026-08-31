@@ -30,5 +30,10 @@ def type_color(type_name: str) -> str:
     return TYPE_COLORS.get(type_name, "#6C757D")
 
 
+def border(width: int, color: str) -> ft.Border:
+    side = ft.BorderSide(width, color)
+    return ft.Border(top=side, right=side, bottom=side, left=side)
+
+
 def build_theme() -> ft.Theme:
     return ft.Theme(color_scheme_seed=ft.Colors.RED)

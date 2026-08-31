@@ -65,7 +65,11 @@ assets/                  # Iconos e imágenes
 - [x] Fase 0: Entorno y esqueleto del proyecto.
 - [x] Fase 1: Modelos, Python moderno, asyncio y logging.
 - [x] Fase 2: Cliente PokeAPI, errores, reintentos, paginación y CLI.
-- [ ] Fase 3: Fundamentos de Flet.
+- [x] Fase 3: Maqueta estática Flet con navegación simulada.
+  - Componentes reutilizables: `PokemonCard`, `LoadingIndicator`, `ErrorMessage`, `StatBar`.
+  - Navegación simulada entre generaciones y detalle falso al hacer click.
+  - Toggle de tema oscuro/claro (reto extra).
+- [ ] Fase 4: MVP de búsqueda de Pokémon.
 
 ## Estado
 
