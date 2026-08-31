@@ -83,6 +83,50 @@ def _build_chain() -> EvolutionChain:
     )
 
 
+def _build_branching_chain() -> EvolutionChain:
+    return evolution_chain_from_json(
+        {
+            "id": 67,
+            "chain": {
+                "species": {
+                    "name": "eevee",
+                    "url": "https://pokeapi.co/api/v2/pokemon-species/133/",
+                },
+                "evolution_details": [],
+                "evolves_to": [
+                    {
+                        "species": {
+                            "name": "vaporeon",
+                            "url": "https://pokeapi.co/api/v2/pokemon-species/134/",
+                        },
+                        "evolution_details": [
+                            {
+                                "trigger": {"name": "use-item"},
+                                "item": {"name": "water-stone"},
+                            }
+                        ],
+                        "evolves_to": [],
+                    },
+                    {
+                        "species": {
+                            "name": "umbreon",
+                            "url": "https://pokeapi.co/api/v2/pokemon-species/197/",
+                        },
+                        "evolution_details": [
+                            {
+                                "trigger": {"name": "level-up"},
+                                "min_happiness": 220,
+                                "time_of_day": "night",
+                            }
+                        ],
+                        "evolves_to": [],
+                    },
+                ],
+            },
+        }
+    )
+
+
 def test_build_pokemon_detail_real_data(
     pikachu_json: dict, species_json: dict
 ) -> None:
@@ -99,6 +143,17 @@ def test_build_pokemon_detail_with_chain(
     pokemon = pokemon_detail_from_json(pikachu_json)
     species = pokemon_species_from_json(species_json)
     control = build_pokemon_detail(pokemon, species, chain=_build_chain())
+    assert isinstance(control.content, ft.Tabs)
+
+
+def test_build_pokemon_detail_with_branching_chain(
+    pikachu_json: dict, species_json: dict
+) -> None:
+    pokemon = pokemon_detail_from_json(pikachu_json)
+    species = pokemon_species_from_json(species_json)
+    control = build_pokemon_detail(
+        pokemon, species, chain=_build_branching_chain()
+    )
     assert isinstance(control.content, ft.Tabs)
 
 

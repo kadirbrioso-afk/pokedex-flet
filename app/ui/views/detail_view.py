@@ -273,26 +273,89 @@ def _stats_panel(pokemon: PokemonDetail) -> ft.Control:
     )
 
 
-def _condition_text(node: EvolutionNode) -> str:
-    if node.trade:
-        return "Intercambio"
-    if node.happiness:
-        return "Amistad"
-    if node.min_level:
-        return f"Nivel {node.min_level}"
-    if node.item:
-        return f"Usar {node.item.replace('-', ' ').title()}"
-    if node.trigger == "use-item":
-        return "Usar objeto"
-    if node.trigger == "level-up":
-        return "Subir de nivel"
-    if node.trigger == "trade":
-        return "Intercambio"
-    if node.trigger == "happiness":
-        return "Amistad"
-    if node.trigger:
-        return node.trigger.replace("-", " ").title()
-    return "Evoluciona"
+def _time_of_day_text(value: str) -> str:
+    return {
+        "day": "de día",
+        "night": "de noche",
+        "dusk": "al atardecer",
+        "dawn": "al amanecer",
+    }.get(value, value.replace("-", " "))
+
+
+def _evolution_gender_text(value: int) -> str:
+    return {1: "solo macho", 2: "solo hembra"}.get(
+        value, "con género específico"
+    )
+
+
+def _relative_stats_text(value: int) -> str:
+    if value == 1:
+        return "con Ataque > Defensa"
+    if value == -1:
+        return "con Ataque < Defensa"
+    return "con Ataque = Defensa"
+
+
+def _item_title(name: str) -> str:
+    return name.replace("-", " ").title()
+
+
+def _condition_parts(node: EvolutionNode) -> list[str]:
+    parts: list[str] = []
+    trigger = node.trigger
+    if node.trade or trigger == "trade":
+        base = "Intercambiar"
+        if node.held_item:
+            base += f" sosteniendo {_item_title(node.held_item)}"
+        parts.append(base)
+    elif node.min_happiness is not None:
+        parts.append(f"Amistad (mín. {node.min_happiness})")
+    elif node.happiness or trigger == "happiness":
+        parts.append("Amistad")
+    elif node.held_item:
+        parts.append(f"Sosteniendo {_item_title(node.held_item)}")
+    elif node.item:
+        parts.append(f"Usar {_item_title(node.item)}")
+    elif node.min_level:
+        parts.append(f"Nivel {node.min_level}")
+    elif node.known_move:
+        parts.append(f"Conociendo {_item_title(node.known_move)}")
+    elif node.location:
+        parts.append(f"En {_item_title(node.location)}")
+    elif trigger == "level-up":
+        parts.append("Subir de nivel")
+    elif trigger == "use-item":
+        parts.append("Usar objeto")
+    elif trigger == "shed":
+        parts.append("Desechar la piel")
+    elif trigger:
+        parts.append(_item_title(trigger))
+
+    if node.time_of_day:
+        parts.append(_time_of_day_text(node.time_of_day))
+    if node.gender:
+        parts.append(_evolution_gender_text(node.gender))
+    if node.relative_physical_stats is not None:
+        parts.append(_relative_stats_text(node.relative_physical_stats))
+    if node.needs_overworld_rain:
+        parts.append("Bajo la lluvia")
+    return parts
+
+
+def _condition_arrow(node: EvolutionNode) -> ft.Control:
+    parts = _condition_parts(node)
+    text = " · ".join(parts) or "Evoluciona"
+    arrow = ft.Text(
+        f"↓ {text}",
+        size=11,
+        color=ft.Colors.GREY,
+    )
+    if parts:
+        arrow.tooltip = ft.Tooltip(
+            message="\n".join(parts),
+            wait_duration=300,
+        )
+    return arrow
 
 
 def _species_sprite(node: EvolutionNode) -> ft.Control:
@@ -347,12 +410,11 @@ def _append_chain_level(
     )
     controls.append(ft.Row([ft.Container(width=24 * depth), card], spacing=0))
     for child in node.children:
-        condition = _condition_text(child)
         controls.append(
             ft.Row(
                 [
                     ft.Container(width=24 * depth + 28),
-                    ft.Text(f"↓ {condition}", size=11, color=ft.Colors.GREY),
+                    _condition_arrow(child),
                 ],
                 spacing=0,
             )

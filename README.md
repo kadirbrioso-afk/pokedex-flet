@@ -2,7 +2,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-6 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-7 completadas.
 
 ## Requisitos
 
@@ -102,6 +102,16 @@ assets/                  # Iconos e imágenes
     grupo huevo, crecimiento, ratio de captura y generación.
   - Media: galería de sprites frontales/traseros (normal y shiny), artwork
     oficial y Home.
+- [x] Fase 7: Evoluciones y relaciones avanzadas.
+  - `EvolutionNode` ampliado con condiciones completas: `min_happiness`,
+    `held_item`, `time_of_day`, `gender` (macho/hembra), `known_move`,
+    `location`, `needs_overworld_rain` y `relative_physical_stats`.
+  - Parser de `evolution_details` extrae todas las condiciones sin romper
+    cadenas ramificadas (verificado con Eevee: 8 ramas, piedras y hora).
+  - Flechas de evolución con condiciones legibles (nivel, objeto,
+    intercambio, amistad, hora, género, movimiento, ubicación, lluvia).
+  - Reto extra: tooltip con las condiciones completas al pasar el ratón
+    por la flecha evolutiva.
 
 ## Estado
 

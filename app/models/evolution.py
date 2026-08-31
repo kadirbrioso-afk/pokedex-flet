@@ -14,6 +14,14 @@ class EvolutionNode(BaseModel):
     trigger: str | None = None
     happiness: bool = False
     trade: bool = False
+    min_happiness: int | None = None
+    held_item: str | None = None
+    time_of_day: str | None = None
+    gender: int | None = None
+    known_move: str | None = None
+    location: str | None = None
+    needs_overworld_rain: bool = False
+    relative_physical_stats: int | None = None
     children: list[EvolutionNode] = []
 
 

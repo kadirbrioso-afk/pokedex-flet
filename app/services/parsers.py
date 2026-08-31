@@ -155,31 +155,58 @@ def generation_detail_from_json(data: dict[str, Any]) -> GenerationDetail:
     )
 
 
+def _name_from(maybe_dict: Any) -> str | None:
+    if isinstance(maybe_dict, dict):
+        return maybe_dict.get("name")
+    return str(maybe_dict) if maybe_dict else None
+
+
 def _evolution_node_from_json(data: dict[str, Any]) -> EvolutionNode:
     species_url = data.get("species", {}).get("url")
     species_name = data.get("species", {}).get("name", "")
     pokemon_id = parse_id_from_url(species_url)
 
-    min_level = None
+    min_level: int | None = None
     item: str | None = None
     trigger: str | None = None
     happiness = False
     trade = False
+    min_happiness: int | None = None
+    held_item: str | None = None
+    time_of_day: str | None = None
+    gender: int | None = None
+    known_move: str | None = None
+    location: str | None = None
+    needs_overworld_rain = False
+    relative_physical_stats: int | None = None
 
     for detail in data.get("evolution_details", []):
-        trigger = detail.get("trigger", {}).get("name")
-        min_level = detail.get("min_level")
+        trigger = detail.get("trigger", {}).get("name") or trigger
+        min_level = detail.get("min_level") or min_level
         item_name = detail.get("item")
         if item_name:
-            item = (
-                item_name.get("name")
-                if isinstance(item_name, dict)
-                else str(item_name)
-            )
+            item = _name_from(item_name)
+        held_item_name = detail.get("held_item")
+        if held_item_name:
+            held_item = _name_from(held_item_name)
         if trigger == "happiness":
             happiness = True
         if trigger == "trade":
             trade = True
+        min_happiness = detail.get("min_happiness") or min_happiness
+        time_of_day = detail.get("time_of_day") or time_of_day
+        gender = detail.get("gender") or gender
+        known_move_name = detail.get("known_move")
+        if known_move_name:
+            known_move = _name_from(known_move_name)
+        location_name = detail.get("location")
+        if location_name:
+            location = _name_from(location_name)
+        needs_overworld_rain = bool(detail.get("needs_overworld_rain"))
+        relative_physical_stats = (
+            detail.get("relative_physical_stats")
+            or relative_physical_stats
+        )
 
     children = [
         _evolution_node_from_json(child)
@@ -194,6 +221,14 @@ def _evolution_node_from_json(data: dict[str, Any]) -> EvolutionNode:
         trigger=trigger,
         happiness=happiness,
         trade=trade,
+        min_happiness=min_happiness,
+        held_item=held_item,
+        time_of_day=time_of_day,
+        gender=gender,
+        known_move=known_move,
+        location=location,
+        needs_overworld_rain=needs_overworld_rain,
+        relative_physical_stats=relative_physical_stats,
         children=children,
     )
 

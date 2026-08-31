@@ -111,7 +111,77 @@ def test_parse_evolution_chain(evolution_chain_json: dict) -> None:
     leaf = middle.children[0]
     assert leaf.pokemon_name == "raichu"
     assert leaf.item == "thunder-stone"
-    assert leaf.trigger == "use-item"
+
+
+def test_parse_evolution_rich_conditions() -> None:
+    node = {
+        "species": {
+            "name": "kirlia",
+            "url": "https://pokeapi.co/api/v2/pokemon-species/281/",
+        },
+        "evolution_details": [
+            {
+                "trigger": {"name": "level-up"},
+                "min_level": 30,
+                "time_of_day": "night",
+                "gender": 1,
+                "known_move": {"name": "double-hit"},
+                "location": {"name": "eterna-forest"},
+                "min_happiness": 220,
+                "held_item": {"name": "luxury-ball"},
+                "needs_overworld_rain": True,
+                "relative_physical_stats": 1,
+            }
+        ],
+        "evolves_to": [],
+    }
+    chain = evolution_chain_from_json(
+        {"id": 5, "chain": node}
+    )
+    evolved: EvolutionNode = chain.chain
+    assert evolved.min_level == 30
+    assert evolved.min_happiness == 220
+    assert evolved.held_item == "luxury-ball"
+    assert evolved.time_of_day == "night"
+    assert evolved.gender == 1
+    assert evolved.known_move == "double-hit"
+    assert evolved.location == "eterna-forest"
+    assert evolved.needs_overworld_rain is True
+    assert evolved.relative_physical_stats == 1
+
+
+def test_parse_evolution_trade_with_item() -> None:
+    chain = evolution_chain_from_json(
+        {
+            "id": 7,
+            "chain": {
+                "species": {
+                    "name": "poliwhirl",
+                    "url": "https://pokeapi.co/api/v2/pokemon-species/61/",
+                },
+                "evolution_details": [],
+                "evolves_to": [
+                    {
+                        "species": {
+                            "name": "politoed",
+                            "url": "https://pokeapi.co/api/v2/pokemon-species/186/",
+                        },
+                        "evolution_details": [
+                            {
+                                "trigger": {"name": "trade"},
+                                "held_item": {"name": "kings-rock"},
+                            }
+                        ],
+                        "evolves_to": [],
+                    }
+                ],
+            },
+        }
+    )
+    evolved = chain.chain.children[0]
+    assert evolved.trade is True
+    assert evolved.trigger == "trade"
+    assert evolved.held_item == "kings-rock"
 
 
 def test_parse_generation_summary_from_results_entry() -> None:
