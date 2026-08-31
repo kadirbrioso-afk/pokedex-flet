@@ -9,3 +9,4 @@ from dataclasses import dataclass
 class AppState:
     selected_generation_id: int | None = None
     selected_pokemon_id: int | None = None
+    last_search: str | None = None

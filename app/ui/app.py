@@ -8,6 +8,8 @@ import flet as ft
 
 from app import __version__
 from app.core.config import AppConfig
+from app.services.pokeapi_client import PokeAPIClient
+from app.services.pokemon_service import PokemonService
 from app.state.app_state import AppState
 from app.ui.theme import build_theme
 from app.ui.views.home_view import HomeView
@@ -47,5 +49,12 @@ def start(page: ft.Page) -> None:
     page.spacing = 8
 
     page.appbar = _build_app_bar(page, config.app_name)
-    page.add(HomeView(page, AppState()).build())
+
+    client = PokeAPIClient()
+
+    async def on_disconnect(_: Any) -> None:
+        await client.close()
+
+    page.on_disconnect = on_disconnect
+    page.add(HomeView(page, AppState(), PokemonService(client)).build())
     page.update()

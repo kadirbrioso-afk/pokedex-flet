@@ -24,7 +24,7 @@ def build_pokemon_card(
                     src=summary.sprite_url or "",
                     width=48,
                     height=48,
-                    fit=ft.ImageFit.CONTAIN,
+                    fit=ft.BoxFit.CONTAIN,
                 ),
                 ft.Column(
                     [

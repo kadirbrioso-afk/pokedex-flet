@@ -2,7 +2,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md` (Fase 0 activa: scaffold + semilla funcional).
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-4 completadas.
 
 ## Requisitos
 
@@ -69,8 +69,17 @@ assets/                  # Iconos e imágenes
   - Componentes reutilizables: `PokemonCard`, `LoadingIndicator`, `ErrorMessage`, `StatBar`.
   - Navegación simulada entre generaciones y detalle falso al hacer click.
   - Toggle de tema oscuro/claro (reto extra).
-- [ ] Fase 4: MVP de búsqueda de Pokémon.
+- [x] Fase 4: MVP de búsqueda de Pokémon.
+  - `TextField` + botón Buscar (Enter también busca); query normalizada
+    (`strip().lower()`) y último término en `AppState.last_search`.
+  - Búsqueda real contra PokeAPI vía `PokemonService.get_pokemon_with_species`
+    con indicador de carga y botón deshabilitado mientras consulta.
+  - Detalle real: sprite, nombre ES, tipos coloreados, descripción, altura,
+    peso, habilidades y barras de stats.
+  - Errores amigables: no encontrado (`PokemonNotFoundError`) y error de red
+    con botón Reintentar.
+  - `PokeAPIClient` inyectado desde `app.py` y cerrado en `on_disconnect`.
 
 ## Estado
 
-Semilla funcional: la app abre una ventana con el layout base. Los modelos, el caché y el cliente de API están listos para construir las siguientes fases.
+MVP de búsqueda funcional: la app abre la ventana con la maqueta navegable y un buscador que consulta PokeAPI en tiempo real, mostrando detalle y manejando errores.

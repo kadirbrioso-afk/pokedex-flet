@@ -10,7 +10,7 @@ import flet as ft
 
 def build_error(
     message: str,
-    on_retry: Callable[[Any], None] | None = None,
+    on_retry: Callable[[Any], Any] | None = None,
 ) -> ft.Container:
     content: list[ft.Control] = [
         ft.Icon(ft.Icons.ERROR_OUTLINE, size=40, color=ft.Colors.ERROR),
