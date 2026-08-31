@@ -44,7 +44,7 @@ class PokemonDetail(BaseModel):
 
 
 def sprite_url(pokemon_id: int | None) -> str | None:
-    if pokemon_id is None:
+    if pokemon_id is None or pokemon_id >= 10000:
         return None
     config = AppConfig()
     return f"{config.sprite_base_url}/{pokemon_id}.png"

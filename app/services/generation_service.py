@@ -7,6 +7,7 @@ from typing import Any
 from app.core.cache import TTLCache
 from app.core.config import AppConfig
 from app.models.generation import GenerationDetail, GenerationSummary
+from app.models.pokemon import PokemonSummary
 from app.services.parsers import (
     generation_detail_from_json,
     generation_summary_from_json,
@@ -45,3 +46,10 @@ class GenerationService:
         generation = generation_detail_from_json(data)
         self._cache.set(cache_key, generation)
         return generation
+
+    async def get_pokemon_summaries(
+        self,
+        identifier: str | int,
+    ) -> list[PokemonSummary]:
+        generation = await self.get_generation(identifier)
+        return generation.species_summaries()

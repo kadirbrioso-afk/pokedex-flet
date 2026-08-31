@@ -13,19 +13,29 @@ from app.ui.theme import border
 
 def build_pokemon_card(
     summary: PokemonSummary,
-    on_click: Callable[[Any], None] | None = None,
+    on_click: Callable[[Any], Any] | None = None,
     selected: bool = False,
 ) -> ft.Container:
     display_name = summary.name.replace("-", " ").title()
+    sprite = (
+        ft.Image(
+            src=summary.sprite_url,
+            width=48,
+            height=48,
+            fit=ft.BoxFit.CONTAIN,
+            error_content=ft.Icon(
+                ft.Icons.CATCHING_POKEMON,
+                size=32,
+                color=ft.Colors.GREY,
+            ),
+        )
+        if summary.sprite_url
+        else ft.Icon(ft.Icons.CATCHING_POKEMON, size=32, color=ft.Colors.GREY)
+    )
     return ft.Container(
         content=ft.Row(
             [
-                ft.Image(
-                    src=summary.sprite_url or "",
-                    width=48,
-                    height=48,
-                    fit=ft.BoxFit.CONTAIN,
-                ),
+                sprite,
                 ft.Column(
                     [
                         ft.Text(

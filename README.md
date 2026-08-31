@@ -2,7 +2,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-4 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-5 completadas.
 
 ## Requisitos
 
@@ -79,7 +79,14 @@ assets/                  # Iconos e imágenes
   - Errores amigables: no encontrado (`PokemonNotFoundError`) y error de red
     con botón Reintentar.
   - `PokeAPIClient` inyectado desde `app.py` y cerrado en `on_disconnect`.
+- [x] Fase 5: Lista interactiva de generaciones.
+  - Generaciones reales desde `/generation` en el `NavigationRail` con nombre de región.
+  - Lista de Pokémon de `/generation/{id}` (1 llamada, cacheada); sprites por ID sin llamadas extra.
+  - Filtro local por nombre/ID y orden por ID o nombre.
+  - Paginación local (50 por página) con botones Anterior/Siguiente.
+  - Click en un Pokémon abre el detalle real (loading + errores con reintento).
+  - Sprite placeholder para formas (ID ≥ 10000).
 
 ## Estado
 
-MVP de búsqueda funcional: la app abre la ventana con la maqueta navegable y un buscador que consulta PokeAPI en tiempo real, mostrando detalle y manejando errores.
+La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable por generación, paginación local, búsqueda global y detalle real al hacer click.

@@ -8,6 +8,7 @@ import flet as ft
 
 from app import __version__
 from app.core.config import AppConfig
+from app.services.generation_service import GenerationService
 from app.services.pokeapi_client import PokeAPIClient
 from app.services.pokemon_service import PokemonService
 from app.state.app_state import AppState
@@ -56,5 +57,12 @@ def start(page: ft.Page) -> None:
         await client.close()
 
     page.on_disconnect = on_disconnect
-    page.add(HomeView(page, AppState(), PokemonService(client)).build())
+    home = HomeView(
+        page,
+        AppState(),
+        PokemonService(client),
+        GenerationService(client),
+    )
+    page.add(home.build())
+    page.run_task(home.load_initial)
     page.update()

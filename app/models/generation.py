@@ -6,6 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.models.pokemon import PokemonSummary, sprite_url
+
 
 class GenerationSummary(BaseModel):
     id: int
@@ -26,3 +28,24 @@ class GenerationDetail(BaseModel):
             except (ValueError, IndexError):
                 continue
         return ids
+
+    def species_summaries(self) -> list[PokemonSummary]:
+        summaries: list[PokemonSummary] = []
+        for entry in self.pokemon_species:
+            url = entry.get("url", "")
+            try:
+                species_id = int(url.rstrip("/").split("/")[-1])
+            except (ValueError, IndexError):
+                continue
+            name = entry.get("name")
+            if not name:
+                continue
+            summaries.append(
+                PokemonSummary(
+                    id=species_id,
+                    name=name,
+                    sprite_url=sprite_url(species_id),
+                    generation_id=self.id,
+                )
+            )
+        return summaries

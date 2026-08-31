@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from app.services.generation_service import GenerationService
 from app.services.pokemon_service import PokemonService
 
 
@@ -13,11 +14,23 @@ class FakePokeAPIClient:
         self,
         pokemon: dict[str, Any] | None = None,
         species: dict[str, Any] | None = None,
+        generation: dict[str, Any] | None = None,
     ) -> None:
         self._pokemon = pokemon or {}
         self._species = species or {}
+        self._generation = generation or {
+            "id": 1,
+            "name": "generation-i",
+            "pokemon_species": [
+                {
+                    "name": "bulbasaur",
+                    "url": "https://pokeapi.co/api/v2/pokemon-species/1/",
+                },
+            ],
+        }
         self.pokemon_calls = 0
         self.species_calls = 0
+        self.generation_calls = 0
 
     async def get_pokemon(self, identifier: str | int) -> dict[str, Any]:
         self.pokemon_calls += 1
@@ -30,10 +43,14 @@ class FakePokeAPIClient:
         return self._species
 
     async def get_generations(self) -> list[dict[str, Any]]:
-        return []
+        return [
+            {"name": "generation-i", "url": "https://pokeapi.co/api/v2/generation/1/"}
+        ]
 
     async def get_generation(self, identifier: str | int) -> dict[str, Any]:
-        return {"id": identifier, "name": "generation-x", "pokemon_species": []}
+        self.generation_calls += 1
+        await asyncio.sleep(0)
+        return self._generation
 
     async def get_evolution_chain(self, chain_id: int) -> dict[str, Any]:
         return {
@@ -87,3 +104,47 @@ async def test_get_pokemon_with_species_is_concurrent(
     assert species.spanish_name == "Pikachu"
     assert client.pokemon_calls == 1
     assert client.species_calls == 1
+
+
+async def test_generation_summaries_build_sprite_urls() -> None:
+    generation = {
+        "id": 1,
+        "name": "generation-i",
+        "pokemon_species": [
+            {"name": "bulbasaur", "url": "https://pokeapi.co/api/v2/pokemon-species/1/"},
+            {"name": "forms", "url": "https://pokeapi.co/api/v2/pokemon-species/10001/"},
+        ],
+    }
+    client = FakePokeAPIClient(generation=generation)
+    service = GenerationService(client)
+
+    summaries = await service.get_pokemon_summaries(1)
+
+    assert len(summaries) == 2
+    assert summaries[0].name == "bulbasaur"
+    assert summaries[0].sprite_url is not None
+    assert summaries[1].sprite_url is None
+    assert summaries[0].generation_id == 1
+    assert client.generation_calls == 1
+
+
+async def test_generation_summaries_are_cached() -> None:
+    client = FakePokeAPIClient()
+    service = GenerationService(client)
+
+    first = await service.get_pokemon_summaries(1)
+    second = await service.get_pokemon_summaries(1)
+
+    assert first == second
+    assert client.generation_calls == 1
+
+
+async def test_get_generations_parses_fake_payload() -> None:
+    client = FakePokeAPIClient()
+    service = GenerationService(client)
+
+    generations = await service.get_generations()
+
+    assert len(generations) == 1
+    assert generations[0].id == 1
+    assert generations[0].name == "generation-i"

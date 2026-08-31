@@ -36,6 +36,12 @@ def test_build_pokemon_card() -> None:
     assert isinstance(control, ft.Container)
 
 
+def test_build_pokemon_card_without_sprite() -> None:
+    summary = PokemonSummary(id=10001, name="forms")
+    control = build_pokemon_card(summary, on_click=None, selected=False)
+    assert isinstance(control, ft.Container)
+
+
 def test_build_loading_and_error() -> None:
     assert isinstance(build_loading(), ft.Container)
     assert isinstance(build_error("Algo falló"), ft.Container)

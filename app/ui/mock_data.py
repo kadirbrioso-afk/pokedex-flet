@@ -8,18 +8,7 @@ from __future__ import annotations
 
 from app.models.generation import GenerationSummary
 from app.models.pokemon import PokemonSummary, sprite_url
-
-REGIONS: dict[int, str] = {
-    1: "Kanto",
-    2: "Johto",
-    3: "Hoenn",
-    4: "Sinnoh",
-    5: "Unova",
-    6: "Kalos",
-    7: "Alola",
-    8: "Galar",
-    9: "Paldea",
-}
+from app.ui.regions import REGIONS
 
 SPECIES: dict[int, list[tuple[int, str]]] = {
     1: [
