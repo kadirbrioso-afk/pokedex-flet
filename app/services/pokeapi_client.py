@@ -7,6 +7,9 @@ from typing import Any
 import httpx
 
 from app.core.config import AppConfig
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class PokeAPIError(Exception):
@@ -58,6 +61,12 @@ class PokeAPIClient:
     async def close(self) -> None:
         await self._client.aclose()
 
+    async def __aenter__(self) -> PokeAPIClient:
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        await self.close()
+
     async def _get(
         self,
         path: str,
@@ -66,6 +75,7 @@ class PokeAPIClient:
         try:
             response = await self._client.get(path, params=params)
         except httpx.HTTPError as exc:
+            logger.warning("Error de red pidiendo %s: %s", path, exc)
             raise NetworkError(str(exc)) from exc
 
         if response.status_code == httpx.codes.NOT_FOUND:

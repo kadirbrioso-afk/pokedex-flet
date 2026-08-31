@@ -47,8 +47,8 @@ assets/                  # Iconos e imágenes
 ## Roadmap
 
 - [x] Fase 0: Entorno y esqueleto del proyecto.
-- [ ] Fase 1: Modelos y Python moderno (en curso).
-- [ ] Fases 2-10: Cliente API, UI, generaciones, detalle, evolución, rendimiento, calidad y release.
+- [x] Fase 1: Modelos, Python moderno, asyncio y logging.
+- [ ] Fase 2: Cliente PokeAPI y endpoints.
 
 ## Estado
 
