@@ -99,7 +99,10 @@ def pokemon_species_from_json(data: dict[str, Any]) -> PokemonSpecies:
 
 
 def generation_summary_from_json(data: dict[str, Any]) -> GenerationSummary:
-    return GenerationSummary(id=data["id"], name=data["name"])
+    generation_id = data.get("id") or parse_id_from_url(data.get("url"))
+    if generation_id is None:
+        raise ValueError("ID de generación no disponible")
+    return GenerationSummary(id=generation_id, name=data["name"])
 
 
 def generation_detail_from_json(data: dict[str, Any]) -> GenerationDetail:

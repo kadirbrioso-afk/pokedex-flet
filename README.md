@@ -21,6 +21,22 @@ uv sync
 uv run python main.py
 ```
 
+## CLI de pruebas (Fase 2)
+
+Puedes probar el cliente de PokeAPI desde la terminal:
+
+```bash
+uv run pokedex get-pokemon pikachu
+uv run pokedex get-species pikachu
+uv run pokedex get-evolution-chain pikachu
+uv run pokedex get-generation 1
+uv run pokedex generations
+```
+
+Equivalentemente: `uv run python -m app.cli get-pokemon pikachu`.
+
+El cliente implementa reintentos (429/5xx y errores de red), concurrencia limitada con semáforo, paginación y manejo de respuestas inválidas.
+
 ## Calidad
 
 ```bash
@@ -48,7 +64,8 @@ assets/                  # Iconos e imágenes
 
 - [x] Fase 0: Entorno y esqueleto del proyecto.
 - [x] Fase 1: Modelos, Python moderno, asyncio y logging.
-- [ ] Fase 2: Cliente PokeAPI y endpoints.
+- [x] Fase 2: Cliente PokeAPI, errores, reintentos, paginación y CLI.
+- [ ] Fase 3: Fundamentos de Flet.
 
 ## Estado
 

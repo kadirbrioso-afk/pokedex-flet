@@ -19,6 +19,8 @@ class AppConfig:
     connect_timeout: float = 5.0
     cache_ttl_seconds: int = 60 * 60 * 24
     semaphore_limit: int = 5
+    max_retries: int = 2
+    retry_backoff: float = 0.5
     cache_dir: Path = field(
         default_factory=lambda: Path.home() / ".cache" / "pokedex-flet"
     )
