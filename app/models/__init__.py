@@ -1,0 +1,1 @@
+"""Modelos Pydantic de dominio para la Pokédex."""

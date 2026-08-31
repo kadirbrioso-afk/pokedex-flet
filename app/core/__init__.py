@@ -1,0 +1,1 @@
+"""Núcleo de la aplicación: config, logging y caché."""

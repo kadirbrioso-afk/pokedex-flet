@@ -1,0 +1,33 @@
+# Dependencias
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Cachés de la app
+.cache/
+
+# Herramientas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Builds de Flet
+build_*/
+flet_builds/
+
+# Entorno/editor
+.env
+.idea/
+.vscode/
+
+# Artefactos de fixtures descargados
+tests/fixtures/
+!tests/fixtures/.gitkeep
