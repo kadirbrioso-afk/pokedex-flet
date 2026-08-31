@@ -24,6 +24,39 @@ def test_parse_pikachu_detail(pikachu_json: dict) -> None:
     assert None not in pokemon.sprites.values()
 
 
+def test_parse_moves_and_artwork(pikachu_json: dict) -> None:
+    data = {**pikachu_json, "moves": []}
+    data["moves"] = [
+        {
+            "move": {"name": "quick-attack"},
+            "version_group_details": [
+                {"level_learned_at": 11, "move_learn_method": {"name": "level-up"}}
+            ],
+        },
+        {
+            "move": {"name": "thunderbolt"},
+            "version_group_details": [
+                {"level_learned_at": 0, "move_learn_method": {"name": "machine"}}
+            ],
+        },
+    ]
+    data["sprites"] = {
+        **data["sprites"],
+        "other": {
+            "official-artwork": {"front_default": "https://example.com/artwork.png"},
+            "home": {"front_default": "https://example.com/home.png"},
+        },
+    }
+    pokemon = pokemon_detail_from_json(data)
+    assert len(pokemon.moves) == 2
+    assert pokemon.moves[0].name == "quick-attack"
+    assert pokemon.moves[0].learn_method == "level-up"
+    assert pokemon.moves[0].level == 11
+    assert pokemon.moves[1].learn_method == "machine"
+    assert pokemon.sprites["official_artwork"] == "https://example.com/artwork.png"
+    assert pokemon.sprites["home"] == "https://example.com/home.png"
+
+
 def test_parse_species_spanish(species_json: dict) -> None:
     species = pokemon_species_from_json(species_json)
     assert species.id == 25
@@ -34,6 +67,32 @@ def test_parse_species_spanish(species_json: dict) -> None:
     assert species.color == "yellow"
     assert species.generation == 1
     assert species.evolution_chain_url.endswith("10/")
+
+
+def test_parse_species_extras(species_json: dict) -> None:
+    data = {
+        **species_json,
+        "gender_rate": 4,
+        "egg_groups": [
+            {"name": "field"},
+            {"name": "fairy"},
+        ],
+        "growth_rate": {"name": "medium"},
+    }
+    species = pokemon_species_from_json(data)
+    assert species.gender_rate == 4
+    assert species.egg_groups == ["field", "fairy"]
+    assert species.growth_rate == "medium"
+
+
+def test_parse_species_without_optional(species_json: dict) -> None:
+    minimal = {"id": 25, "name": "pikachu", "names": [], "flavor_text_entries": []}
+    species = pokemon_species_from_json(minimal)
+    assert species.habitat is None
+    assert species.color is None
+    assert species.gender_rate is None
+    assert species.egg_groups == []
+    assert species.growth_rate is None
 
 
 def test_parse_evolution_chain(evolution_chain_json: dict) -> None:

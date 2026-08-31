@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import flet as ft
 
+from app.models.evolution import EvolutionChain
 from app.models.pokemon import PokemonSummary
-from app.services.parsers import pokemon_detail_from_json, pokemon_species_from_json
+from app.services.parsers import (
+    evolution_chain_from_json,
+    pokemon_detail_from_json,
+    pokemon_species_from_json,
+)
 from app.ui.components.error_message import build_error
 from app.ui.components.loading_indicator import build_loading
 from app.ui.components.pokemon_card import build_pokemon_card
@@ -51,6 +56,33 @@ def test_build_stat_bar() -> None:
     assert isinstance(build_stat_bar("speed", 90), ft.Row)
 
 
+def _build_chain() -> EvolutionChain:
+    return evolution_chain_from_json(
+        {
+            "id": 10,
+            "chain": {
+                "species": {
+                    "name": "pichu",
+                    "url": "https://pokeapi.co/api/v2/pokemon-species/172/",
+                },
+                "evolution_details": [],
+                "evolves_to": [
+                    {
+                        "species": {
+                            "name": "pikachu",
+                            "url": "https://pokeapi.co/api/v2/pokemon-species/25/",
+                        },
+                        "evolution_details": [
+                            {"trigger": {"name": "level-up"}, "min_level": 2}
+                        ],
+                        "evolves_to": [],
+                    }
+                ],
+            },
+        }
+    )
+
+
 def test_build_pokemon_detail_real_data(
     pikachu_json: dict, species_json: dict
 ) -> None:
@@ -58,4 +90,32 @@ def test_build_pokemon_detail_real_data(
     species = pokemon_species_from_json(species_json)
     control = build_pokemon_detail(pokemon, species)
     assert isinstance(control, ft.Container)
-    assert isinstance(control.content, ft.Column)
+    assert isinstance(control.content, ft.Tabs)
+
+
+def test_build_pokemon_detail_with_chain(
+    pikachu_json: dict, species_json: dict
+) -> None:
+    pokemon = pokemon_detail_from_json(pikachu_json)
+    species = pokemon_species_from_json(species_json)
+    control = build_pokemon_detail(pokemon, species, chain=_build_chain())
+    assert isinstance(control.content, ft.Tabs)
+
+
+def test_build_pokemon_detail_with_click_callback(
+    pikachu_json: dict, species_json: dict
+) -> None:
+    calls: list[int] = []
+
+    def on_clicked(pokemon_id: int, name: str) -> None:
+        calls.append(pokemon_id)
+
+    pokemon = pokemon_detail_from_json(pikachu_json)
+    species = pokemon_species_from_json(species_json)
+    control = build_pokemon_detail(
+        pokemon,
+        species,
+        chain=_build_chain(),
+        on_pokemon_clicked=on_clicked,
+    )
+    assert isinstance(control.content, ft.Tabs)

@@ -2,7 +2,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-5 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-6 completadas.
 
 ## Requisitos
 
@@ -86,7 +86,23 @@ assets/                  # Iconos e imágenes
   - Paginación local (50 por página) con botones Anterior/Siguiente.
   - Click en un Pokémon abre el detalle real (loading + errores con reintento).
   - Sprite placeholder para formas (ID ≥ 10000).
+- [x] Fase 6: Vista de detalle completa con pestañas.
+  - `PokemonService.get_pokemon_detail_full` carga Pokémon, especie y cadena
+    evolutiva en paralelo (`asyncio.gather`), cacheada.
+  - Pestañas (TabBar/TabBarView): Info, Stats, Evolución, Movimientos,
+    Especie y Media.
+  - Info: sprite con selector Normal/Shiny/Artwork sin recargar, tipos,
+    descripción ES, experiencia, altura, peso y habilidades.
+  - Stats: barras en orden estándar (hp→speed) con total.
+  - Evolución: cadena clicable (navega al detalle de cada eslabón) con
+    condición de evolución (nivel, objeto, intercambio, amistad…).
+  - Movimientos: agrupados por método de aprendizaje (por nivel, MT/MO,
+    huevo, tutor) y nivel en el método de nivel.
+  - Especie: hábitat, color, forma, género (♂/♀ % desde `gender_rate`),
+    grupo huevo, crecimiento, ratio de captura y generación.
+  - Media: galería de sprites frontales/traseros (normal y shiny), artwork
+    oficial y Home.
 
 ## Estado
 
-La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable por generación, paginación local, búsqueda global y detalle real al hacer click.
+Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y datos en español. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local, búsqueda global y detalle real al hacer click.

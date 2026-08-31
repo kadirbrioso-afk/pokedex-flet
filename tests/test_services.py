@@ -31,6 +31,7 @@ class FakePokeAPIClient:
         self.pokemon_calls = 0
         self.species_calls = 0
         self.generation_calls = 0
+        self.evolution_calls = 0
 
     async def get_pokemon(self, identifier: str | int) -> dict[str, Any]:
         self.pokemon_calls += 1
@@ -53,6 +54,7 @@ class FakePokeAPIClient:
         return self._generation
 
     async def get_evolution_chain(self, chain_id: int) -> dict[str, Any]:
+        self.evolution_calls += 1
         return {
             "id": chain_id,
             "chain": {
@@ -104,6 +106,51 @@ async def test_get_pokemon_with_species_is_concurrent(
     assert species.spanish_name == "Pikachu"
     assert client.pokemon_calls == 1
     assert client.species_calls == 1
+
+
+async def test_get_pokemon_detail_full_includes_chain(
+    pikachu_json: dict[str, Any],
+    species_json: dict[str, Any],
+) -> None:
+    client = FakePokeAPIClient(pokemon=pikachu_json, species=species_json)
+    service = PokemonService(client)
+
+    pokemon, species, chain = await service.get_pokemon_detail_full("pikachu")
+
+    assert pokemon.id == 25
+    assert species.id == 25
+    assert chain is not None
+    assert chain.id == 10
+    assert client.pokemon_calls == 1
+    assert client.species_calls == 1
+    assert client.evolution_calls == 1
+    second = await service.get_pokemon_detail_full("pikachu")
+    assert second[0] is pokemon
+    assert second[1] is species
+    assert second[2] is chain
+    assert client.pokemon_calls == 1
+    assert client.species_calls == 1
+    assert client.evolution_calls == 1
+
+
+async def test_get_pokemon_detail_full_without_chain(
+    pikachu_json: dict[str, Any],
+) -> None:
+    species = {
+        "id": 25,
+        "name": "pikachu",
+        "names": [],
+        "flavor_text_entries": [],
+        "evolution_chain": None,
+    }
+    client = FakePokeAPIClient(pokemon=pikachu_json, species=species)
+    service = PokemonService(client)
+
+    pokemon, species, chain = await service.get_pokemon_detail_full(25)
+
+    assert pokemon.id == 25
+    assert chain is None
+    assert client.evolution_calls == 0
 
 
 async def test_generation_summaries_build_sprite_urls() -> None:

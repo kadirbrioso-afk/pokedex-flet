@@ -47,7 +47,7 @@ class HomeView:
 
         self._header_text = ft.Text(size=18, weight=ft.FontWeight.BOLD)
         self._list_container = ft.Container(expand=True)
-        self._detail_container = ft.Container(width=310)
+        self._detail_container = ft.Container(width=360)
         self._filter_field = ft.TextField(
             hint_text="Filtrar en esta generación…",
             prefix_icon=ft.Icons.FILTER_LIST,
@@ -316,41 +316,44 @@ class HomeView:
         async def handler(_: Any) -> None:
             if summary.id is None:
                 return
-            self._state.selected_pokemon_id = summary.id
-            self._detail_container.content = build_loading("Cargando detalle…")
-            self._render_pokemon_list()
-            self._page.update()
-            try:
-                pokemon, species = (
-                    await self._pokemon_service.get_pokemon_with_species(
-                        summary.id
-                    )
-                )
-            except PokemonNotFoundError:
-                self._detail_container.content = build_error(
-                    f"Pokémon «{summary.name}» no encontrado."
-                )
-            except (NetworkError, PokeAPIError) as exc:
-                self._detail_container.content = build_error(
-                    f"Error al cargar el detalle: {exc}",
-                    on_retry=self._make_detail_retry(summary),
-                )
-            else:
-                self._detail_container.content = build_pokemon_detail(
-                    pokemon, species
-                )
-            self._page.update()
+            await self._open_detail(summary.id, summary.name)
 
         return handler
 
+    async def _open_detail(self, pokemon_id: int, name: str) -> None:
+        self._state.selected_pokemon_id = pokemon_id
+        self._detail_container.content = build_loading("Cargando detalle…")
+        self._render_pokemon_list()
+        self._page.update()
+        try:
+            pokemon, species, chain = (
+                await self._pokemon_service.get_pokemon_detail_full(pokemon_id)
+            )
+        except PokemonNotFoundError:
+            self._detail_container.content = build_error(
+                f"Pokémon «{name}» no encontrado."
+            )
+        except (NetworkError, PokeAPIError) as exc:
+            self._detail_container.content = build_error(
+                f"Error al cargar el detalle: {exc}",
+                on_retry=self._make_detail_retry(pokemon_id, name),
+            )
+        else:
+            self._detail_container.content = build_pokemon_detail(
+                pokemon,
+                species,
+                chain,
+                on_pokemon_clicked=self._open_detail,
+            )
+        self._page.update()
+
     def _make_detail_retry(
         self,
-        summary: PokemonSummary,
+        pokemon_id: int,
+        name: str,
     ) -> Callable[[Any], Any]:
-        handler = self._make_pokemon_handler(summary)
-
         async def retry(_: Any) -> None:
-            await handler(None)
+            await self._open_detail(pokemon_id, name)
 
         return retry
 
@@ -395,8 +398,7 @@ class HomeView:
                 on_retry=self._make_retry(query),
             )
         else:
-            self._state.selected_pokemon_id = pokemon.id
-            self._detail_container.content = build_pokemon_detail(pokemon, species)
+            await self._open_detail(pokemon.id, pokemon.name)
         finally:
             self._set_search_loading(False)
             self._page.update()

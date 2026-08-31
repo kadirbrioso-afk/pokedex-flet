@@ -64,6 +64,21 @@ class PokemonService:
         )
         return pokemon, species
 
+    async def get_pokemon_detail_full(
+        self,
+        identifier: str | int,
+    ) -> tuple[PokemonDetail, PokemonSpecies, EvolutionChain | None]:
+        pokemon, species = await asyncio.gather(
+            self.get_pokemon(identifier),
+            self.get_species(identifier),
+        )
+        chain: EvolutionChain | None = None
+        if species.evolution_chain_url:
+            chain_id = parse_id_from_url(species.evolution_chain_url)
+            if chain_id is not None:
+                chain = await self.get_evolution_chain(chain_id)
+        return pokemon, species, chain
+
     async def get_evolution_chain(self, identifier: str | int) -> EvolutionChain:
         cache_key = f"evolution-chain:{identifier}"
         cached = self._cache.get(cache_key)

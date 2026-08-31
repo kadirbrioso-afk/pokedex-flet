@@ -30,6 +30,12 @@ class PokemonAbility(BaseModel):
     slot: int = 1
 
 
+class PokemonMove(BaseModel):
+    name: str
+    learn_method: str = "level-up"
+    level: int | None = None
+
+
 class PokemonDetail(BaseModel):
     id: int
     name: str
@@ -41,6 +47,7 @@ class PokemonDetail(BaseModel):
     types: list[PokemonType] = []
     stats: list[PokemonStat] = []
     abilities: list[PokemonAbility] = []
+    moves: list[PokemonMove] = []
 
 
 def sprite_url(pokemon_id: int | None) -> str | None:

@@ -9,6 +9,7 @@ from app.models.generation import GenerationDetail, GenerationSummary
 from app.models.pokemon import (
     PokemonAbility,
     PokemonDetail,
+    PokemonMove,
     PokemonStat,
     PokemonType,
     sprite_url,
@@ -50,6 +51,34 @@ def pokemon_detail_from_json(data: dict[str, Any]) -> PokemonDetail:
         for key, value in data.get("sprites", {}).items()
         if isinstance(value, str)
     }
+    other = data.get("sprites", {}).get("other", {}) or {}
+    official_artwork = other.get("official-artwork", {}).get("front_default")
+    home = other.get("home", {}).get("front_default")
+    if isinstance(official_artwork, str):
+        sprites["official_artwork"] = official_artwork
+    if isinstance(home, str):
+        sprites["home"] = home
+
+    moves: list[PokemonMove] = []
+    seen: set[tuple[str, str, int | None]] = set()
+    for entry in data.get("moves", []):
+        move_name = entry.get("move", {}).get("name")
+        if not move_name:
+            continue
+        details = entry.get("version_group_details") or []
+        if details:
+            method = details[0].get("move_learn_method", {}).get("name", "level-up")
+            level = details[0].get("level_learned_at")
+        else:
+            method, level = "level-up", None
+        key = (move_name, method, level)
+        if key in seen:
+            continue
+        seen.add(key)
+        moves.append(
+            PokemonMove(name=move_name, learn_method=method, level=level)
+        )
+
     return PokemonDetail(
         id=data["id"],
         name=data["name"],
@@ -60,6 +89,7 @@ def pokemon_detail_from_json(data: dict[str, Any]) -> PokemonDetail:
         types=types,
         stats=stats,
         abilities=abilities,
+        moves=moves,
     )
 
 
@@ -83,6 +113,13 @@ def _description(data: dict[str, Any]) -> str | None:
 
 def pokemon_species_from_json(data: dict[str, Any]) -> PokemonSpecies:
     generation_url = data.get("generation", {}).get("url")
+    growth_rate = data.get("growth_rate")
+    egg_groups = [
+        entry.get("name")
+        for entry in data.get("egg_groups", [])
+        if isinstance(entry.get("name"), str)
+    ]
+    evolution_chain = data.get("evolution_chain")
     return PokemonSpecies(
         id=data["id"],
         name=data["name"],
@@ -93,8 +130,13 @@ def pokemon_species_from_json(data: dict[str, Any]) -> PokemonSpecies:
         shape=data.get("shape", {}).get("name") if data.get("shape") else None,
         capture_rate=data.get("capture_rate"),
         base_happiness=data.get("base_happiness"),
+        gender_rate=data.get("gender_rate"),
+        egg_groups=egg_groups,
+        growth_rate=growth_rate.get("name") if growth_rate else None,
         generation=parse_id_from_url(generation_url),
-        evolution_chain_url=data.get("evolution_chain", {}).get("url"),
+        evolution_chain_url=evolution_chain.get("url")
+        if isinstance(evolution_chain, dict)
+        else None,
     )
 
 

@@ -15,5 +15,8 @@ class PokemonSpecies(BaseModel):
     shape: str | None = None
     capture_rate: int | None = None
     base_happiness: int | None = None
+    gender_rate: int | None = None
+    egg_groups: list[str] = []
+    growth_rate: str | None = None
     generation: int | None = None
     evolution_chain_url: str | None = None
