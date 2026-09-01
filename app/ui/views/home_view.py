@@ -9,7 +9,7 @@ from typing import Any
 import flet as ft
 
 from app.i18n import t, translator
-from app.models.evolution import EvolutionChain
+from app.models.evolution import EvolutionChain, EvolutionNode
 from app.models.generation import GenerationSummary
 from app.models.pokemon import PokemonDetail, PokemonSummary
 from app.models.species import PokemonSpecies
@@ -23,6 +23,7 @@ from app.services.pokeapi_client import (
     PokemonNotFoundError,
 )
 from app.services.pokemon_service import PokemonService
+from app.services.sprite_cache import SpriteCache
 from app.services.type_service import TypeService
 from app.state.app_state import AppState
 from app.ui.components.error_message import build_error
@@ -51,12 +52,14 @@ class HomeView:
         local_store: LocalStore | None = None,
         compare_service: CompareService | None = None,
         type_service: TypeService | None = None,
+        sprite_cache: SpriteCache | None = None,
     ) -> None:
         self._page = page
         self._state = state
         self._pokemon_service = pokemon_service
         self._generation_service = generation_service
         self._store = local_store or LocalStore()
+        self._cache = sprite_cache or SpriteCache()
         self._generations: list[GenerationSummary] = []
         self._summaries: list[PokemonSummary] = []
         self._selected_index = 0
@@ -285,6 +288,8 @@ class HomeView:
         else:
             self._restore_after_special_view()
         self._render_pokemon_list()
+        if offline:
+            self._page.run_task(self._resolve_summaries_and_render)
         self._page.update()
 
     def set_favorites(self, on: bool) -> None:
@@ -300,6 +305,8 @@ class HomeView:
         else:
             self._restore_after_special_view()
         self._render_pokemon_list()
+        if on:
+            self._page.run_task(self._resolve_summaries_and_render)
         self._page.update()
 
     def _restore_after_special_view(self) -> None:
@@ -466,6 +473,7 @@ class HomeView:
             self._page.update()
             return
         self._summaries = summaries
+        await self._resolve_summaries(summaries)
         self._render_pokemon_list()
         self._page.update()
 
@@ -549,6 +557,7 @@ class HomeView:
                 on_retry=self._make_detail_retry(pokemon_id, name),
             )
         else:
+            await self._cache_detail_sprites(pokemon, chain)
             self._store.add_recent(
                 pokemon.id,
                 pokemon.name,
@@ -557,6 +566,63 @@ class HomeView:
             self._detail_container.content = (
                 self._build_detail_content(pokemon, species, chain)
             )
+        self._page.update()
+
+    async def _resolve_summaries(
+        self,
+        summaries: list[PokemonSummary],
+    ) -> None:
+        """Descarga los sprites de la lista una sola vez y apunta a rutas locales."""
+        pending: list[tuple[PokemonSummary, str]] = []
+        for summary in summaries:
+            url = summary.sprite_url
+            if url:
+                pending.append((summary, url))
+        if not pending:
+            return
+        resolved = await asyncio.gather(
+            *(self._cache.ensure(url, 96) for _, url in pending)
+        )
+        for (summary, _), path in zip(pending, resolved, strict=True):
+            summary.sprite_url = path
+
+    async def _cache_detail_sprites(
+        self,
+        pokemon: PokemonDetail,
+        chain: EvolutionChain | None,
+    ) -> None:
+        """Descarga los sprites/artworks del detalle y los deja en caché local."""
+        pairs = [(key, url) for key, url in pokemon.sprites.items() if url]
+        if pairs:
+            resolved = await asyncio.gather(
+                *[self._cache.ensure(url, 320) for _, url in pairs]
+            )
+            for (key, _), path in zip(pairs, resolved, strict=True):
+                pokemon.sprites[key] = path
+        if chain is None:
+            return
+        nodes: list[tuple[EvolutionNode, str]] = []
+
+        def walk(node: EvolutionNode) -> None:
+            if node.sprite_url:
+                nodes.append((node, node.sprite_url))
+            for child in node.children:
+                walk(child)
+
+        walk(chain.chain)
+        if not nodes:
+            return
+        resolved = await asyncio.gather(
+            *[self._cache.ensure(url, 96) for _, url in nodes]
+        )
+        for (node, _), path in zip(nodes, resolved, strict=True):
+            node.sprite_url = path
+
+    async def _resolve_summaries_and_render(self) -> None:
+        if self._view_mode not in (VIEW_OFFLINE, VIEW_FAVORITES):
+            return
+        await self._resolve_summaries(self._summaries)
+        self._render_pokemon_list()
         self._page.update()
 
     def _pokemon_sprite(self, pokemon: PokemonDetail) -> str | None:

@@ -186,7 +186,7 @@ def _info_panel(
         or pokemon.sprites.get("home")
         or "",
     }
-    selected_key = "artwork" if images["artwork"] and not images["normal"] else "normal"
+    selected_key = "artwork" if images["artwork"] else "normal"
     main_image = ft.Image(
         src=images[selected_key],
         width=150,

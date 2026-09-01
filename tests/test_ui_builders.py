@@ -26,6 +26,7 @@ from app.ui.mock_data import mock_pokemon
 from app.ui.theme import FONT_FAMILY, build_theme, card_border
 from app.ui.views.detail_view import (
     _display_name,
+    _info_panel,
     build_detail,
     build_empty_detail,
     build_pokemon_detail,
@@ -89,6 +90,18 @@ def test_card_border_variants() -> None:
     assert card_border().top.color == ft.Colors.OUTLINE_VARIANT
     assert card_border(selected=True).top.color == ft.Colors.PRIMARY
     assert card_border(on_surface=True).top.color == ft.Colors.OUTLINE
+
+
+def test_detail_main_image_defaults_to_artwork(pikachu_json: dict) -> None:
+    pokemon = pokemon_detail_from_json(pikachu_json)
+    panel = _info_panel(pokemon, None)
+    assert isinstance(panel, ft.Column)
+    main_image = panel.controls[0]
+    assert isinstance(main_image, ft.Image)
+    assert main_image.src == pokemon.sprites["official_artwork"]
+    dropdown = panel.controls[1]
+    assert isinstance(dropdown, ft.Dropdown)
+    assert dropdown.value == "artwork"
 
 
 def test_build_loading_and_error() -> None:

@@ -2,15 +2,27 @@
 
 from __future__ import annotations
 
+import io
 import tempfile
 from pathlib import Path
 from typing import Any
 
+import httpx
+import respx
+from PIL import Image
+
 from app.core.config import AppConfig
-from app.models.pokemon import PokemonSummary
+from app.models.pokemon import PokemonDetail, PokemonSummary
 from app.services.local_store import LocalStore
+from app.services.sprite_cache import SpriteCache
 from app.state.app_state import AppState
 from app.ui.views.home_view import HomeView
+
+
+def _png_bytes() -> bytes:
+    buffer = io.BytesIO()
+    Image.new("RGBA", (96, 96)).save(buffer, "PNG")
+    return buffer.getvalue()
 
 
 class FakePage:
@@ -173,3 +185,79 @@ def test_set_language_updates_state_and_chrome() -> None:
 
     home.set_language("es")
     assert home._search_button.content == "Buscar"
+
+
+@respx.mock
+async def test_resolve_summaries_localizes_sprites(tmp_path: Path) -> None:
+    respx.get("https://example.com/p.png").mock(
+        return_value=httpx.Response(200, content=_png_bytes())
+    )
+    home = _make_home()
+    home._cache = SpriteCache(
+        config=AppConfig(cache_dir=tmp_path / "cache", data_dir=tmp_path / "data")
+    )
+    summaries = [
+        PokemonSummary(id=25, name="pikachu", sprite_url="https://example.com/p.png")
+    ]
+
+    await home._resolve_summaries(summaries)
+
+    sprite = summaries[0].sprite_url
+    assert sprite is not None
+    assert sprite.startswith(str(tmp_path / "cache"))
+    assert Path(sprite).is_file()
+    await home._cache.close()
+
+
+@respx.mock
+async def test_resolve_summaries_keeps_url_on_failure(tmp_path: Path) -> None:
+    respx.get("https://example.com/p.png").mock(
+        side_effect=httpx.ConnectError("no network")
+    )
+    home = _make_home()
+    home._cache = SpriteCache(
+        config=AppConfig(cache_dir=tmp_path / "cache", data_dir=tmp_path / "data")
+    )
+    summaries = [
+        PokemonSummary(id=25, name="pikachu", sprite_url="https://example.com/p.png")
+    ]
+
+    await home._resolve_summaries(summaries)
+
+    assert summaries[0].sprite_url == "https://example.com/p.png"
+    await home._cache.close()
+
+
+async def test_resolve_summaries_skips_empty_sprites() -> None:
+    home = _make_home()
+    summaries = [PokemonSummary(id=99, name="no-sprite")]
+
+    await home._resolve_summaries(summaries)
+
+    assert summaries[0].sprite_url is None
+
+
+@respx.mock
+async def test_cache_detail_sprites_localizes_paths(tmp_path: Path) -> None:
+    respx.get("https://example.com/a.png").mock(
+        return_value=httpx.Response(200, content=_png_bytes())
+    )
+    home = _make_home()
+    home._cache = SpriteCache(
+        config=AppConfig(cache_dir=tmp_path / "cache", data_dir=tmp_path / "data")
+    )
+    pokemon = PokemonDetail(
+        id=25,
+        name="pikachu",
+        sprites={
+            "front_default": "https://example.com/a.png",
+            "official_artwork": "https://example.com/a.png",
+        },
+    )
+
+    await home._cache_detail_sprites(pokemon, None)
+
+    sprites = pokemon.sprites
+    assert sprites["front_default"].startswith(str(tmp_path / "cache"))
+    assert sprites["official_artwork"].startswith(str(tmp_path / "cache"))
+    await home._cache.close()

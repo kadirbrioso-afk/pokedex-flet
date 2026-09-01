@@ -15,6 +15,7 @@ from app.services.generation_service import GenerationService
 from app.services.local_store import LocalStore
 from app.services.pokeapi_client import PokeAPIClient
 from app.services.pokemon_service import PokemonService
+from app.services.sprite_cache import SpriteCache
 from app.services.type_service import TypeService
 from app.state.app_state import AppState
 from app.ui.theme import build_theme
@@ -130,9 +131,11 @@ def start(page: ft.Page) -> None:
     page.window.icon = "icons/logo.ico"
 
     client = PokeAPIClient()
+    sprite_cache = SpriteCache()
 
     async def on_disconnect(_: Any) -> None:
         await client.close()
+        await sprite_cache.close()
 
     page.on_disconnect = on_disconnect
     pokemon_service = PokemonService(client)
@@ -144,6 +147,7 @@ def start(page: ft.Page) -> None:
         LocalStore(),
         CompareService(pokemon_service),
         TypeService(client),
+        sprite_cache=sprite_cache,
     )
     page.appbar = _build_app_bar(
         page,

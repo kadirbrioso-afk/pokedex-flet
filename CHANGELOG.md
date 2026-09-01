@@ -4,6 +4,20 @@ Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog
 
 ## [Unreleased]
 
+### Caché de sprites local + artwork por defecto
+- **Caché de imágenes con Pillow**: nuevo `SpriteCache` descarga cada sprite
+  de PokeAPI una sola vez y lo guarda como WebP en `~/.cache/pokedex-flet/sprites`
+  (~95% menos de datos que los PNG originales). Las siguientes visitas se sirven
+  desde disco sin red, y la app funciona con imágenes aunque no haya conexión.
+- **Integración con la UI**: la lista de generación, el detalle, la cadena
+  evolutiva y los modos offline/favoritos resuelven las imágenes a rutas
+  locales antes de renderizar; concurrencia limitada por semáforo.
+- **Artwork por defecto**: la imagen principal del detalle y el desplegable de
+  vistas seleccionan ahora "Artwork" (arte oficial de alta resolución) en lugar
+  del sprite clásico si está disponible.
+- **Degradación segura**: si la descarga o conversión falla, se devuelve la URL
+  original y la UI mantiene el icono de respaldo (sin caché no rompe nada).
+
 ### Fase 15 - Tema visual profesional
 - **Tipografía consistente**: fuente unificada en todo el tema
   (`Theme.font_family`), `CardTheme` (esquinas redondeadas y elevación) y
