@@ -115,6 +115,43 @@ def test_parse_species_without_optional(species_json: dict) -> None:
     assert species.gender_rate is None
     assert species.egg_groups == []
     assert species.growth_rate is None
+    assert species.varieties == []
+
+
+def test_parse_species_varieties(species_json: dict) -> None:
+    data = {
+        **species_json,
+        "varieties": [
+            {
+                "is_default": True,
+                "pokemon": {"name": "charizard", "url": ".../pokemon/6/"},
+            },
+            {
+                "is_default": False,
+                "pokemon": {
+                    "name": "charizard-mega-x",
+                    "url": ".../pokemon/10034/",
+                },
+            },
+            {
+                "is_default": False,
+                "pokemon": {
+                    "name": "charizard-gmax",
+                    "url": ".../pokemon/10196/",
+                },
+            },
+        ],
+    }
+    species = pokemon_species_from_json(data)
+    assert len(species.varieties) == 3
+    default, mega, gmax = species.varieties
+    assert default.name == "charizard"
+    assert default.pokemon_id == 6
+    assert default.is_default is True
+    assert mega.name == "charizard-mega-x"
+    assert mega.pokemon_id == 10034
+    assert mega.is_default is False
+    assert gmax.pokemon_id == 10196
 
 
 def test_parse_evolution_chain(evolution_chain_json: dict) -> None:

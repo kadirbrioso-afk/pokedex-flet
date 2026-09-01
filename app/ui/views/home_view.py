@@ -11,7 +11,7 @@ import flet as ft
 from app.i18n import t, translator
 from app.models.evolution import EvolutionChain, EvolutionNode
 from app.models.generation import GenerationSummary
-from app.models.pokemon import PokemonDetail, PokemonSummary
+from app.models.pokemon import PokemonDetail, PokemonSummary, sprite_url
 from app.models.species import PokemonSpecies
 from app.services.compare_service import CompareService
 from app.services.generation_service import GenerationService
@@ -634,15 +634,56 @@ class HomeView:
         species: PokemonSpecies | None,
         chain: EvolutionChain | None,
     ) -> ft.Control:
+        favorite_id = species.id if species is not None else pokemon.id
         return build_pokemon_detail(
             pokemon,
             species,
             chain,
             on_pokemon_clicked=self._open_detail,
-            is_favorite=self._store.is_favorite(pokemon.id),
+            is_favorite=self._store.is_favorite(favorite_id),
             on_toggle_favorite=self._make_toggle_favorite(pokemon, species, chain),
+            on_form_changed=self._make_form_changed_handler(species, chain),
             lang=self._state.lang,
         )
+
+    def _make_form_changed_handler(
+        self,
+        species: PokemonSpecies | None,
+        chain: EvolutionChain | None,
+    ) -> Callable[[int], Any]:
+        def change_form(pokemon_id: int) -> None:
+            if species is None:
+                return
+            self._page.run_task(self._change_form, species, chain, pokemon_id)
+
+        return change_form
+
+    async def _change_form(
+        self,
+        species: PokemonSpecies,
+        chain: EvolutionChain | None,
+        pokemon_id: int,
+    ) -> None:
+        self._detail_container.content = build_skeleton_detail()
+        self._page.update()
+        try:
+            pokemon = await self._pokemon_service.get_pokemon(pokemon_id)
+        except (NetworkError, PokeAPIError) as exc:
+            self._detail_container.content = build_error(
+                t("home.error_detail", error=str(exc)),
+                on_retry=self._make_detail_retry(pokemon_id, species.name),
+            )
+        else:
+            await self._cache_detail_sprites(pokemon, chain)
+            self._store.add_recent(
+                species.id,
+                pokemon.name,
+                self._pokemon_sprite(pokemon),
+            )
+            self._detail_container.content = (
+                self._build_detail_content(pokemon, species, chain)
+            )
+        self._page.update()
 
     def _make_toggle_favorite(
         self,
@@ -650,11 +691,18 @@ class HomeView:
         species: PokemonSpecies | None,
         chain: EvolutionChain | None,
     ) -> Callable[[], Any]:
+        def default_sprite() -> str | None:
+            if species is not None:
+                return sprite_url(species.id)
+            return self._pokemon_sprite(pokemon)
+
         def toggle() -> None:
+            favorite_id = species.id if species is not None else pokemon.id
+            default_name = species.name if species is not None else pokemon.name
             self._store.toggle_favorite(
-                pokemon.id,
-                pokemon.name,
-                self._pokemon_sprite(pokemon),
+                favorite_id,
+                default_name,
+                default_sprite(),
             )
             if self._view_mode == VIEW_FAVORITES:
                 self._summaries = self._favorite_summaries()

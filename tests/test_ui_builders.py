@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import flet as ft
 
+from app.i18n import t
 from app.models.evolution import EvolutionChain
-from app.models.pokemon import PokemonSummary
-from app.models.species import PokemonSpecies
+from app.models.pokemon import PokemonDetail, PokemonSummary
+from app.models.species import PokemonSpecies, PokemonVariety
 from app.models.type_chart import TypeDamages, combine_types
 from app.services.parsers import (
     evolution_chain_from_json,
@@ -102,6 +103,72 @@ def test_detail_main_image_defaults_to_artwork(pikachu_json: dict) -> None:
     dropdown = panel.controls[1]
     assert isinstance(dropdown, ft.Dropdown)
     assert dropdown.value == "artwork"
+
+
+def _species_with_varieties() -> PokemonSpecies:
+    return PokemonSpecies(
+        id=6,
+        name="charizard",
+        names={},
+        descriptions={},
+        varieties=[
+            PokemonVariety(name="charizard", pokemon_id=6, is_default=True),
+            PokemonVariety(name="charizard-mega-x", pokemon_id=10034),
+            PokemonVariety(name="charizard-mega-y", pokemon_id=10035),
+        ],
+    )
+
+
+def test_form_selector_is_added_when_multiple_varieties() -> None:
+    pokemon = PokemonDetail(id=6, name="charizard")
+    species = _species_with_varieties()
+    callback_calls: list[int] = []
+
+    def on_form_changed(pokemon_id: int) -> None:
+        callback_calls.append(pokemon_id)
+
+    panel = _info_panel(pokemon, species, on_form_changed=on_form_changed)
+    assert isinstance(panel, ft.Column)
+    form_dropdown = next(
+        c
+        for c in panel.controls
+        if isinstance(c, ft.Dropdown) and c.label == t("detail.form.label")
+    )
+    assert isinstance(form_dropdown, ft.Dropdown)
+    assert form_dropdown.value == "6"
+    assert len(form_dropdown.options) == 3
+
+
+def test_form_selector_not_added_for_single_form() -> None:
+    pokemon = PokemonDetail(id=25, name="pikachu")
+    species = PokemonSpecies(
+        id=25,
+        name="pikachu",
+        names={},
+        descriptions={},
+        varieties=[PokemonVariety(name="pikachu", pokemon_id=25, is_default=True)],
+    )
+    panel = _info_panel(pokemon, species, on_form_changed=lambda _: None)
+    assert isinstance(panel, ft.Column)
+    form_labels = [
+        c.label
+        for c in panel.controls
+        if isinstance(c, ft.Dropdown)
+    ]
+    assert t("detail.form.label") not in form_labels
+
+
+def test_form_selector_hidden_without_callback() -> None:
+    pokemon = PokemonDetail(id=6, name="charizard")
+    species = _species_with_varieties()
+    panel = _info_panel(pokemon, species)
+    assert isinstance(panel, ft.Column)
+    form_labels = [
+        c.label
+        for c in panel.controls
+        if isinstance(c, ft.Dropdown)
+    ]
+    assert t("detail.form.label") not in form_labels
 
 
 def test_build_loading_and_error() -> None:

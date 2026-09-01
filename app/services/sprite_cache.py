@@ -50,7 +50,7 @@ class SpriteCache:
 
     async def ensure(self, url: str, max_size: int | None = None) -> str:
         """Devuelve la ruta local (WebP) del sprite o la URL original si falla."""
-        if not url:
+        if not url or not (url.startswith("http://") or url.startswith("https://")):
             return url
         target = self.cache_path(url, max_size)
         if target.is_file():

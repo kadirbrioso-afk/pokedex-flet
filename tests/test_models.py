@@ -37,9 +37,10 @@ def test_pokemon_detail_accepts_partial_data() -> None:
     assert pokemon.height is None
 
 
-def test_sprite_url_none_for_forms() -> None:
+def test_sprite_url_allows_mega_forms() -> None:
     assert sprite_url(25) is not None
-    assert sprite_url(10001) is None
+    assert sprite_url(10034).endswith("/10034.png")  # mega
+    assert sprite_url(10196).endswith("/10196.png")  # gmax
     assert sprite_url(None) is None
 
 
@@ -51,7 +52,7 @@ def test_generation_species_summaries() -> None:
     assert summaries[0].name == "bulbasaur"
     assert summaries[0].sprite_url is not None
     assert summaries[0].generation_id == 1
-    assert summaries[2].sprite_url is None
+    assert summaries[2].sprite_url is not None
 
 
 def test_species_localized_name_fallback() -> None:

@@ -178,7 +178,7 @@ async def test_generation_summaries_build_sprite_urls() -> None:
     assert len(summaries) == 2
     assert summaries[0].name == "bulbasaur"
     assert summaries[0].sprite_url is not None
-    assert summaries[1].sprite_url is None
+    assert summaries[1].sprite_url is not None
     assert summaries[0].generation_id == 1
     assert client.generation_calls == 1
 

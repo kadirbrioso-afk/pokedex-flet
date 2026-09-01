@@ -4,7 +4,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-15 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-15 completadas, más caché de sprites con Pillow y formas especiales/megavoluciones.
 
 ## Requisitos
 
@@ -231,4 +231,4 @@ assets/                  # Iconos e imágenes
 
 Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON. Comparador de dos Pokémon (stats con barras, tipos, habilidades y evoluciones) accesible desde la AppBar. Tabla de tipos (debilidades, resistencias, inmunidades y daño normal combinando uno o dos tipos) accesible desde la AppBar. La interfaz está completamente internacionalizada (ES/EN) con selector de idioma en la AppBar: nombres y descripciones de especie se muestran en el idioma activo con fallbacks. Tema visual profesional v0.2.0: tipografía consistente, modo oscuro (sigue al sistema), skeleton loaders mientras cargan listas y detalle, hover animado en tarjetas y colores por tipo en badges, comparador y tabla de tipos.
 
-Las imágenes se cachean localmente en WebP con Pillow (`~/.cache/pokedex-flet/sprites`): cada sprite se descarga una sola vez y las siguientes visitas se sirven desde disco sin red (modo offline con imágenes incluidas, con degradación a la URL original si algo falla). El detalle muestra por defecto el arte oficial de alta resolución (`official-artwork` of PokeAPI) en lugar del sprite clásico, con desplegable para cambiar de vista (normal/shiny/artwork).
+Las imágenes se cachean localmente en WebP con Pillow (`~/.cache/pokedex-flet/sprites`): cada sprite se descarga una sola vez y las siguientes visitas se sirven desde disco sin red (modo offline con imágenes incluidas, con degradación a la URL original si algo falla). El detalle muestra por defecto el arte oficial de alta resolución (`official-artwork` of PokeAPI) en lugar del sprite clásico, con desplegable para cambiar de vista (normal/shiny/artwork). Las especies con varias formas especiales o megavoluciones (Mega Charizard X/Y, Gigantamax, Deoxys, etc.) muestran un selector «Forma» en la ficha que recarga la entrada desde PokeAPI y actualiza sprites, tipos y stats de esa variedad; los favoritos y recientes siempre usan el ID y sprite default de la especie.

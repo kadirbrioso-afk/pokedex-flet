@@ -12,7 +12,8 @@ import respx
 from PIL import Image
 
 from app.core.config import AppConfig
-from app.models.pokemon import PokemonDetail, PokemonSummary
+from app.models.pokemon import PokemonDetail, PokemonSummary, PokemonType
+from app.models.species import PokemonSpecies, PokemonVariety
 from app.services.local_store import LocalStore
 from app.services.sprite_cache import SpriteCache
 from app.state.app_state import AppState
@@ -54,6 +55,20 @@ class FakePokemonService:
 
     def get_cached_pokemon(self, identifier: int) -> dict[str, Any] | None:
         return self._cached.get(identifier)
+
+    async def get_pokemon(self, identifier: str | int) -> Any:
+        data = self._cached.get(int(identifier))
+        if data is None:
+            raise ValueError(f"no pokemon {identifier}")
+        return PokemonDetail(
+            id=data["id"],
+            name=data["name"],
+            sprites=data.get("sprites", {}),
+            types=[
+                PokemonType(name=type_data["name"])
+                for type_data in data.get("types", [])
+            ],
+        )
 
 
 class FakeGenerationService:
@@ -260,4 +275,39 @@ async def test_cache_detail_sprites_localizes_paths(tmp_path: Path) -> None:
     sprites = pokemon.sprites
     assert sprites["front_default"].startswith(str(tmp_path / "cache"))
     assert sprites["official_artwork"].startswith(str(tmp_path / "cache"))
+    await home._cache.close()
+
+
+@respx.mock
+async def test_form_changed_renders_selected_form(tmp_path: Path) -> None:
+    respx.get("https://example.com/mega.png").mock(
+        return_value=httpx.Response(200, content=_png_bytes())
+    )
+    home = _make_home(
+        store=LocalStore(config=AppConfig(data_dir=tmp_path / "data"))
+    )
+    home._cache = SpriteCache(
+        config=AppConfig(cache_dir=tmp_path / "cache", data_dir=tmp_path / "data")
+    )
+    home._pokemon_service._cached[10034] = {  # type: ignore[attr-defined]
+        "id": 10034,
+        "name": "charizard-mega-x",
+        "sprites": {"front_default": "https://example.com/mega.png"},
+        "types": [{"name": "dragon"}],
+    }
+    species = PokemonSpecies(
+        id=6,
+        name="charizard",
+        names={},
+        descriptions={},
+        varieties=[
+            PokemonVariety(name="charizard", pokemon_id=6, is_default=True),
+            PokemonVariety(name="charizard-mega-x", pokemon_id=10034),
+        ],
+    )
+
+    await home._change_form(species, None, 10034)
+
+    assert home._detail_container.content is not None
+    assert home._page.updated is True
     await home._cache.close()

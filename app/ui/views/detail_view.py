@@ -170,12 +170,48 @@ def _tabs_from_panels(panels: list[tuple[str, ft.Control]]) -> ft.Tabs:
     )
 
 
+def _build_form_selector(
+    pokemon: PokemonDetail,
+    species: PokemonSpecies | None,
+    on_form_changed: Callable[[int], Any] | None,
+) -> ft.Control | None:
+    if not species or len(species.varieties) <= 1 or on_form_changed is None:
+        return None
+
+    def option_label(name: str) -> str:
+        if name == species.name:
+            return t("detail.form.normal")
+        return name.replace("-", " ").title()
+
+    def on_select(_: Any) -> None:
+        selected_id = form_dropdown.value
+        if selected_id is not None and int(selected_id) != pokemon.id:
+            on_form_changed(int(selected_id))
+
+    form_dropdown = ft.Dropdown(
+        value=str(pokemon.id),
+        width=200,
+        dense=True,
+        label=t("detail.form.label"),
+        options=[
+            ft.dropdown.Option(
+                key=str(variety.pokemon_id),
+                text=option_label(variety.name),
+            )
+            for variety in species.varieties
+        ],
+        on_select=on_select,
+    )
+    return form_dropdown
+
+
 def _info_panel(
     pokemon: PokemonDetail,
     species: PokemonSpecies | None,
     is_favorite: bool = False,
     on_toggle_favorite: Callable[[], Any] | None = None,
     lang: str = "es",
+    on_form_changed: Callable[[int], Any] | None = None,
 ) -> ft.Control:
     images: dict[str, str] = {
         "normal": pokemon.sprites.get("front_default")
@@ -242,6 +278,8 @@ def _info_panel(
         on_click=(lambda _: on_toggle_favorite()) if on_toggle_favorite else None,
     )
 
+    form_selector = _build_form_selector(pokemon, species, on_form_changed)
+
     return ft.Column(
         [
             main_image,
@@ -265,6 +303,7 @@ def _info_panel(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             _type_badges(pokemon),
+            *([form_selector] if form_selector is not None else []),
             ft.Text(
                 description,
                 text_align=ft.TextAlign.CENTER,
@@ -635,12 +674,20 @@ def build_pokemon_detail(
     on_pokemon_clicked: Callable[[int, str], Any] | None = None,
     is_favorite: bool = False,
     on_toggle_favorite: Callable[[], Any] | None = None,
+    on_form_changed: Callable[[int], Any] | None = None,
     lang: str = "es",
 ) -> ft.Container:
     panels: list[tuple[str, ft.Control]] = [
         (
             "detail.tab.info",
-            _info_panel(pokemon, species, is_favorite, on_toggle_favorite, lang),
+            _info_panel(
+                pokemon,
+                species,
+                is_favorite,
+                on_toggle_favorite,
+                lang,
+                on_form_changed,
+            ),
         ),
         ("detail.tab.stats", _stats_panel(pokemon)),
         ("detail.tab.evolution", _evolution_panel(chain, on_pokemon_clicked)),

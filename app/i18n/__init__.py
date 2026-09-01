@@ -133,6 +133,8 @@ _CATALOG: dict[str, dict[str, str]] = {
     "detail.view.normal": {"es": "Normal", "en": "Normal"},
     "detail.view.shiny": {"es": "Shiny", "en": "Shiny"},
     "detail.view.artwork": {"es": "Artwork", "en": "Artwork"},
+    "detail.form.label": {"es": "Forma", "en": "Form"},
+    "detail.form.normal": {"es": "Normal", "en": "Normal"},
     "detail.favorite.add": {
         "es": "Añadir a favoritos",
         "en": "Add to favorites",

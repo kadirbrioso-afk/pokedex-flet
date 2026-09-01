@@ -5,6 +5,12 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
+class PokemonVariety(BaseModel):
+    name: str
+    pokemon_id: int
+    is_default: bool = False
+
+
 class PokemonSpecies(BaseModel):
     id: int
     name: str
@@ -22,6 +28,7 @@ class PokemonSpecies(BaseModel):
     growth_rate: str | None = None
     generation: int | None = None
     evolution_chain_url: str | None = None
+    varieties: list[PokemonVariety] = []
 
     def localized_name(self, lang: str) -> str | None:
         """Nombre localizado para ``lang`` con fallback a es/en."""

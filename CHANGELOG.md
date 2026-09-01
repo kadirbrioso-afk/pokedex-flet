@@ -4,6 +4,21 @@ Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog
 
 ## [Unreleased]
 
+### Formas especiales y megavoluciones
+- **Selector de formas en el detalle**: las especies con varias variedades
+  (mega, gmax, Deoxys, etc.) muestran un desplegable «Forma» en la ficha.
+  Cambiar de forma recarga la entrada de `PokeAPI` (p. ej. `/pokemon/10034/`
+  para Mega Charizard X) y muestra el skeleton mientras carga.
+- **Modelo `varieties`**: `PokemonSpecies` ahora parsea `varieties` de
+  `pokemon-species` (nombre por pantalla + `pokemon_id` + `is_default`);
+  nuevo `PokemonVariety`.
+- **`sprite_url` sin filtro**: se permite el sprite de formas con ID 10000+
+  (los assets de GitHub de PokeAPI sí están disponibles).
+- **Favoritos estables**: los favoritos/recientes siempre usan el ID y sprite
+  **default** de la especie, sin importar la forma activa.
+- **Fix async**: el cambio de forma se ejecuta mediante `page.run_task` para
+  no bloquear el evento; guard en `SpriteCache.ensure` para rutas locales.
+
 ### Caché de sprites local + artwork por defecto
 - **Caché de imágenes con Pillow**: nuevo `SpriteCache` descarga cada sprite
   de PokeAPI una sola vez y lo guarda como WebP en `~/.cache/pokedex-flet/sprites`

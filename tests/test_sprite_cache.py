@@ -133,3 +133,10 @@ async def test_empty_url_returns_unchanged(tmp_path: Path) -> None:
     cache = SpriteCache(config=make_config(tmp_path))
     assert await cache.ensure("") == ""
     await cache.close()
+
+
+async def test_local_path_returns_unchanged(tmp_path: Path) -> None:
+    cache = SpriteCache(config=make_config(tmp_path))
+    local = "/tmp/example/cached.webp"
+    assert await cache.ensure(local) == local
+    await cache.close()

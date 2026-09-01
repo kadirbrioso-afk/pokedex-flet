@@ -14,7 +14,7 @@ from app.models.pokemon import (
     PokemonType,
     sprite_url,
 )
-from app.models.species import PokemonSpecies
+from app.models.species import PokemonSpecies, PokemonVariety
 from app.models.type_chart import TypeDamages
 
 
@@ -143,6 +143,15 @@ def pokemon_species_from_json(data: dict[str, Any]) -> PokemonSpecies:
     evolution_chain = data.get("evolution_chain")
     names = _names_map(data)
     descriptions = _descriptions_map(data)
+    varieties = [
+        PokemonVariety(
+            name=entry.get("pokemon", {}).get("name", ""),
+            pokemon_id=parse_id_from_url(entry.get("pokemon", {}).get("url")) or 0,
+            is_default=entry.get("is_default", False),
+        )
+        for entry in data.get("varieties", [])
+        if isinstance(entry, dict) and entry.get("pokemon")
+    ]
     return PokemonSpecies(
         id=data["id"],
         name=data["name"],
@@ -162,6 +171,7 @@ def pokemon_species_from_json(data: dict[str, Any]) -> PokemonSpecies:
         evolution_chain_url=evolution_chain.get("url")
         if isinstance(evolution_chain, dict)
         else None,
+        varieties=varieties,
     )
 
 
