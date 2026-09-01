@@ -126,9 +126,13 @@ class HomeView:
             on_change=self._on_generation_selected,
         )
         self._compare_service = compare_service
+        self._pending_side: str | None = None
+        self._home_row: ft.Row | None = None
         self._compare = CompareView(
             page,
             compare_service or CompareService(pokemon_service),
+            on_pick_a=self._make_begin_pick("A"),
+            on_pick_b=self._make_begin_pick("B"),
             on_close=self._close_compare,
         )
         self._compare_container = ft.Container(
@@ -137,21 +141,48 @@ class HomeView:
             visible=False,
         )
 
+    def _make_begin_pick(self, side: str) -> Callable[[], Any]:
+        def begin() -> None:
+            self._begin_pick(side)
+
+        return begin
+
+    def _begin_pick(self, side: str) -> None:
+        self._pending_side = side
+        self._show_home_for_picking(f"Selecciona Pokémon {side} en la lista")
+        self._page.update()
+
+    def _assign_pending(self, name: str) -> None:
+        if self._pending_side is None:
+            return
+        self._compare.set_side(self._pending_side, name)
+        self._pending_side = None
+        self.set_compare(True)
+
     def _close_compare(self) -> None:
         self.set_compare(False)
 
     def set_compare(self, on: bool) -> None:
+        if self._home_row is None:
+            return
+        self._pending_side = None
         self._compare_container.visible = on
-        if on and not self._compare.has_values:
-            recents = [entry.name for entry in self._store.list_recents()[:2]]
-            self._compare.set_defaults(recents)
+        self._home_row.visible = not on
+        self._page.update()
+
+    def _show_home_for_picking(self, header: str) -> None:
+        if self._home_row is None:
+            return
+        self._compare_container.visible = False
+        self._home_row.visible = True
+        self._header_text.value = header
         self._page.update()
 
     def build(self) -> ft.Stack:
         self._header_text.value = "Pokédex"
         self._list_container.content = build_loading("Cargando generaciones…")
         self._detail_container.content = build_empty_detail()
-        home = ft.Row(
+        self._home_row = ft.Row(
             [
                 self._rail,
                 ft.VerticalDivider(width=1),
@@ -178,8 +209,9 @@ class HomeView:
             expand=True,
             spacing=0,
         )
+        self._home_row.visible = not self._compare_container.visible
         return ft.Stack(
-            [home, self._compare_container],
+            [self._home_row, self._compare_container],
             expand=True,
         )
 
@@ -427,6 +459,9 @@ class HomeView:
     ) -> Callable[[Any], Any]:
         async def handler(_: Any) -> None:
             if summary.id is None:
+                return
+            if self._pending_side is not None:
+                self._assign_pending(summary.name)
                 return
             await self._open_detail(summary.id, summary.name)
 

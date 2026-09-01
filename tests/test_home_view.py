@@ -102,3 +102,32 @@ def test_favorite_summaries_empty_when_no_favorites() -> None:
     store = LocalStore(config=AppConfig(data_dir=Path(tempfile.mkdtemp())))
     home = _make_home(store=store)
     assert home._favorite_summaries() == []
+
+
+async def test_pending_selection_assigns_from_list() -> None:
+    home = _make_home()
+    home.build()
+    home._begin_pick("B")
+    assert home._pending_side == "B"
+    assert home._home_row is not None
+    assert home._home_row.visible is True
+
+    summary = PokemonSummary(id=25, name="pikachu")
+    handler = home._make_pokemon_handler(summary)
+    await handler(None)
+
+    assert home._pending_side is None
+    assert home._compare._right_name == "pikachu"  # noqa: SLF001
+    assert home._compare_container.visible is True
+    assert home._home_row.visible is False
+
+
+def test_compare_open_and_close_toggles_visibility() -> None:
+    home = _make_home()
+    home.build()
+    home.set_compare(True)
+    assert home._compare_container.visible is True
+    assert home._home_row.visible is False
+    home.set_compare(False)
+    assert home._compare_container.visible is False
+    assert home._home_row.visible is True

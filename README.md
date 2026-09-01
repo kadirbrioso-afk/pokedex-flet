@@ -196,8 +196,9 @@ assets/                  # Iconos e imágenes
     búsqueda exitosa se recuerda.
 - [x] Fase 12: Comparador de Pokémon.
   - `CompareService` + modelo `PokemonComparison` con dos lados (A/B).
-  - Botón «Comparar» en la AppBar abre la vista con selectores A y B
-    (prefill con los últimos vistos).
+  - Botón «Comparar» en la AppBar abre la vista de comparación. Los Pokémon
+    A y B se eligen **desde la lista**: «Elegir A»/«Elegir B» te llevan a la
+    lista para escoger cada uno.
   - Compara stats (barras lado a lado, ganador en verde, total), tipos,
     habilidades y cadenas evolutivas.
 

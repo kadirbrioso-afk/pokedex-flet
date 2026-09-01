@@ -250,27 +250,31 @@ def build_comparison(comparison: PokemonComparison) -> ft.Control:
 
 
 class CompareView:
-    """Comparador de dos Pokémon, con selección de A y B."""
+    """Comparador de dos Pokémon, con selección de A y B desde la lista."""
 
     def __init__(
         self,
         page: ft.Page,
         compare_service: CompareService,
+        on_pick_a: Callable[[], Any],
+        on_pick_b: Callable[[], Any],
         on_close: Callable[[], Any] | None = None,
     ) -> None:
         self._page = page
         self._compare_service = compare_service
         self._on_close = on_close
 
-        self._field_a = ft.TextField(
-            label="Pokémon A (nombre o ID)",
-            dense=True,
-            on_submit=self._on_submit_a,
+        self._name_a = ft.Text("—", size=14, weight=ft.FontWeight.BOLD)
+        self._name_b = ft.Text("—", size=14, weight=ft.FontWeight.BOLD)
+        self._pick_a_button = ft.OutlinedButton(
+            "Elegir A",
+            icon=ft.Icons.ADD,
+            on_click=self._make_pick(lambda: on_pick_a()),
         )
-        self._field_b = ft.TextField(
-            label="Pokémon B (nombre o ID)",
-            dense=True,
-            on_submit=self._on_submit_b,
+        self._pick_b_button = ft.OutlinedButton(
+            "Elegir B",
+            icon=ft.Icons.ADD,
+            on_click=self._make_pick(lambda: on_pick_b()),
         )
         self._compare_button = ft.FilledButton(
             "Comparar",
@@ -283,18 +287,38 @@ class CompareView:
             on_click=self._on_close_clicked,
         )
         self._result = ft.Container(expand=True)
+        self._left_name: str | None = None
+        self._right_name: str | None = None
+
+    @staticmethod
+    def _make_pick(callback: Callable[[], Any]) -> Callable[[Any], Any]:
+        def pick(_: Any) -> None:
+            callback()
+
+        return pick
 
     def build(self) -> ft.Control:
         return ft.Column(
             [
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            self._side_block(
+                                "Pokémon A", self._name_a, self._pick_a_button
+                            ),
+                            self._side_block(
+                                "Pokémon B", self._name_b, self._pick_b_button
+                            ),
+                        ],
+                        spacing=16,
+                    ),
+                    padding=8,
+                    border_radius=10,
+                ),
                 ft.Row(
-                    [
-                        self._field_a,
-                        self._field_b,
-                        self._compare_button,
-                        self._close_button,
-                    ],
+                    [self._compare_button, self._close_button],
                     spacing=8,
+                    alignment=ft.MainAxisAlignment.CENTER,
                 ),
                 self._result,
             ],
@@ -302,35 +326,47 @@ class CompareView:
             expand=True,
         )
 
-    def set_defaults(self, names: list[str]) -> None:
-        """Prefieta los selectores con los nombres más recientes, si se aportan."""
-        if not self._field_a.value and names:
-            self._field_a.value = names[0]
-        if not self._field_b.value and len(names) > 1:
-            self._field_b.value = names[1]
+    @staticmethod
+    def _side_block(
+        label: str,
+        name: ft.Text,
+        button: ft.Control,
+    ) -> ft.Column:
+        return ft.Column(
+            [
+                ft.Text(label, size=12, color=ft.Colors.GREY),
+                name,
+                button,
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=4,
+            expand=True,
+        )
 
-    @property
-    def has_values(self) -> bool:
-        left = (self._field_a.value or "").strip()
-        right = (self._field_b.value or "").strip()
-        return bool(left or right)
+    def set_side(self, side: str, name: str) -> None:
+        """Asigna el Pokémon elegido de la lista a un lado (\"A\" o \"B\")."""
+        if side.upper() == "A":
+            self._left_name = name
+            self._name_a.value = name
+        else:
+            self._right_name = name
+            self._name_b.value = name
+
+    def has_both(self) -> bool:
+        return bool(self._left_name and self._right_name)
 
     def _on_close_clicked(self, _: Any) -> None:
         if self._on_close:
             self._on_close()
 
-    def _on_submit_a(self, _: Any) -> None:
-        self._on_compare(_)
-
-    def _on_submit_b(self, _: Any) -> None:
-        self._on_compare(_)
-
     def _on_compare(self, _: Any) -> None:
-        left = (self._field_a.value or "").strip()
-        right = (self._field_b.value or "").strip()
+        left = self._left_name
+        right = self._right_name
         if not left or not right:
             self._page.show_dialog(
-                ft.SnackBar(ft.Text("Escribe ambos Pokémon para comparar."))
+                ft.SnackBar(
+                    ft.Text("Selecciona ambos Pokémon (A y B) para comparar.")
+                )
             )
             self._page.update()
             return

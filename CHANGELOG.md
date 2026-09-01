@@ -23,6 +23,15 @@ Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog
 - `HomeView` ahora usa un `Stack` para superponer la vista de comparación sobre
   la principal.
 
+### Fase 12 - arreglos del comparador
+- Se elimina la superposición de vistas: la lista principal y el comparador son
+  ahora mutuamente excluyentes (al abrir el comparador se oculta la lista, y
+  viceversa), sin solaparse.
+- La selección de Pokémon A y B se hace **desde la lista**: botones «Elegir A» y
+  «Elegir B» en el comparador; al pulsarlos vuelves a la lista para escoger el
+  Pokémon (con aviso «Selecciona Pokémon A/B»), y al hacer clic en uno se asigna
+  al lado correspondiente y se muestra la comparación.
+
 ## [0.1.0] - 2026-09-01
 
 Fases 0-9 completadas y Fase 10 (empaquetado y distribución).

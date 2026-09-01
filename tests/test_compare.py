@@ -7,8 +7,57 @@ from typing import Any
 from app.models.compare import PokemonComparison, build_comparison_side
 from app.services.compare_service import CompareService
 from app.services.pokemon_service import PokemonService
-from app.ui.views.compare_view import build_comparison
+from app.ui.views.compare_view import CompareView, build_comparison
 from tests.test_services import FakePokeAPIClient
+
+
+class FakePage:
+    def __init__(self) -> None:
+        self.updated = False
+
+    def update(self) -> None:
+        self.updated = True
+
+    def show_dialog(self, _: Any) -> None:
+        return None
+
+    def run_task(self, coro: Any, *args: Any) -> Any:
+        return coro
+
+
+def _compare_view() -> CompareView:
+    client = FakePokeAPIClient(pokemon={}, species={})  # type: ignore[arg-type]
+    service = PokemonService(client)
+    return CompareView(
+        FakePage(),
+        CompareService(service),
+        on_pick_a=lambda: None,
+        on_pick_b=lambda: None,
+    )
+
+
+def test_compare_view_side_selection() -> None:
+    view = _compare_view()
+    assert view.has_both() is False
+    view.set_side("A", "pikachu")
+    assert view.has_both() is False
+    view.set_side("B", "charizard")
+    assert view.has_both() is True
+
+
+def test_compare_view_set_side_replaces_value() -> None:
+    view = _compare_view()
+    view.set_side("A", "pikachu")
+    view.set_side("A", "raichu")
+    assert view._left_name == "raichu"  # noqa: SLF001
+    assert view._name_a.value == "raichu"  # noqa: SLF001
+
+
+def test_compare_view_compare_requires_both_sides() -> None:
+    view = _compare_view()
+    view.set_side("A", "pikachu")
+    view._on_compare(None)  # noqa: SLF001
+    assert view.has_both() is False
 
 
 async def test_build_comparison_side_maps_data(
