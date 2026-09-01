@@ -9,6 +9,7 @@ import flet as ft
 
 from app import __version__
 from app.core.config import AppConfig
+from app.services.compare_service import CompareService
 from app.services.generation_service import GenerationService
 from app.services.local_store import LocalStore
 from app.services.pokeapi_client import PokeAPIClient
@@ -23,10 +24,12 @@ def _build_app_bar(
     title: str,
     on_offline_toggle: Callable[[bool], Any] | None = None,
     on_favorites_toggle: Callable[[bool], Any] | None = None,
+    on_compare_toggle: Callable[[bool], Any] | None = None,
 ) -> ft.AppBar:
     dark_mode = False
     offline = False
     favorites = False
+    compare = False
 
     def toggle_theme(_: Any) -> None:
         nonlocal dark_mode
@@ -46,12 +49,24 @@ def _build_app_bar(
         if on_favorites_toggle:
             on_favorites_toggle(favorites)
 
+    def toggle_compare(_: Any) -> None:
+        nonlocal compare
+        compare = not compare
+        if on_compare_toggle:
+            on_compare_toggle(compare)
+
     return ft.AppBar(
         title=ft.Text(title),
         center_title=True,
         bgcolor=ft.Colors.RED_700,
         color=ft.Colors.WHITE,
         actions=[
+            ft.IconButton(
+                icon=ft.Icons.COMPARE_ARROWS,
+                icon_color=ft.Colors.WHITE,
+                tooltip="Comparar Pokémon",
+                on_click=toggle_compare,
+            ),
             ft.IconButton(
                 icon=ft.Icons.FAVORITE,
                 icon_color=ft.Colors.AMBER,
@@ -89,18 +104,21 @@ def start(page: ft.Page) -> None:
         await client.close()
 
     page.on_disconnect = on_disconnect
+    pokemon_service = PokemonService(client)
     home = HomeView(
         page,
         AppState(),
-        PokemonService(client),
+        pokemon_service,
         GenerationService(client),
         LocalStore(),
+        CompareService(pokemon_service),
     )
     page.appbar = _build_app_bar(
         page,
         config.app_name,
         home.set_offline,
         home.set_favorites,
+        home.set_compare,
     )
     page.add(home.build())
     page.run_task(home.load_initial)

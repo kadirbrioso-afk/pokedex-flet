@@ -4,7 +4,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-11 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-12 completadas.
 
 ## Requisitos
 
@@ -194,7 +194,13 @@ assets/                  # Iconos e imágenes
     «Favoritos» en la AppBar que lista los marcados.
   - Recientes: cada visita al detalle guarda el Pokémon; historial: cada
     búsqueda exitosa se recuerda.
+- [x] Fase 12: Comparador de Pokémon.
+  - `CompareService` + modelo `PokemonComparison` con dos lados (A/B).
+  - Botón «Comparar» en la AppBar abre la vista con selectores A y B
+    (prefill con los últimos vistos).
+  - Compara stats (barras lado a lado, ganador en verde, total), tipos,
+    habilidades y cadenas evolutivas.
 
 ## Estado
 
-Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON.
+Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON. Comparador de dos Pokémon (stats con barras, tipos, habilidades y evoluciones) accesible desde la AppBar.

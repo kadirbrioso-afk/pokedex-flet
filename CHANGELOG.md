@@ -14,6 +14,15 @@ Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog
   exitosa).
 - `AppConfig.data_dir` añadido; modelos `FavoriteEntry`/`RecentEntry`.
 
+### Fase 12 - Comparador de Pokémon
+- `CompareService` y modelo `PokemonComparison` con dos lados (A/B), cada uno
+  con stats, tipos, habilidades y nombres de evolución.
+- Vista comparador (`CompareView`) accesible desde la AppBar: selectores A y B
+  con prefill de los últimos vistos, comparación de stats con barras lado a
+  lado (ganador en verde), total, tipos, habilidades y cadenas evolutivas.
+- `HomeView` ahora usa un `Stack` para superponer la vista de comparación sobre
+  la principal.
+
 ## [0.1.0] - 2026-09-01
 
 Fases 0-9 completadas y Fase 10 (empaquetado y distribución).

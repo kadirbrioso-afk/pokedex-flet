@@ -12,6 +12,7 @@ from app.models.evolution import EvolutionChain
 from app.models.generation import GenerationSummary
 from app.models.pokemon import PokemonDetail, PokemonSummary
 from app.models.species import PokemonSpecies
+from app.services.compare_service import CompareService
 from app.services.generation_service import GenerationService
 from app.services.local_store import LocalStore
 from app.services.pokeapi_client import (
@@ -25,6 +26,7 @@ from app.ui.components.error_message import build_error
 from app.ui.components.loading_indicator import build_loading
 from app.ui.components.pokemon_card import build_pokemon_card
 from app.ui.regions import region_name
+from app.ui.views.compare_view import CompareView
 from app.ui.views.detail_view import build_empty_detail, build_pokemon_detail
 
 PAGE_SIZE = 50
@@ -42,6 +44,7 @@ class HomeView:
         pokemon_service: PokemonService,
         generation_service: GenerationService,
         local_store: LocalStore | None = None,
+        compare_service: CompareService | None = None,
     ) -> None:
         self._page = page
         self._state = state
@@ -122,12 +125,33 @@ class HomeView:
             ],
             on_change=self._on_generation_selected,
         )
+        self._compare_service = compare_service
+        self._compare = CompareView(
+            page,
+            compare_service or CompareService(pokemon_service),
+            on_close=self._close_compare,
+        )
+        self._compare_container = ft.Container(
+            content=self._compare.build(),
+            expand=True,
+            visible=False,
+        )
 
-    def build(self) -> ft.Row:
+    def _close_compare(self) -> None:
+        self.set_compare(False)
+
+    def set_compare(self, on: bool) -> None:
+        self._compare_container.visible = on
+        if on and not self._compare.has_values:
+            recents = [entry.name for entry in self._store.list_recents()[:2]]
+            self._compare.set_defaults(recents)
+        self._page.update()
+
+    def build(self) -> ft.Stack:
         self._header_text.value = "Pokédex"
         self._list_container.content = build_loading("Cargando generaciones…")
         self._detail_container.content = build_empty_detail()
-        return ft.Row(
+        home = ft.Row(
             [
                 self._rail,
                 ft.VerticalDivider(width=1),
@@ -153,6 +177,10 @@ class HomeView:
             ],
             expand=True,
             spacing=0,
+        )
+        return ft.Stack(
+            [home, self._compare_container],
+            expand=True,
         )
 
     async def load_initial(self) -> None:
