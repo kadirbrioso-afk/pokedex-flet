@@ -4,7 +4,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-9 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-10 completadas.
 
 ## Requisitos
 
@@ -180,6 +180,13 @@ assets/                  # Iconos e imágenes
   - Reto extra: cobertura con `pytest-cov` (umbral mínimo 70 %) sobre
     `app/services` y `app/models`.
   - Pipeline CI en GitHub Actions (`ruff`, `mypy`, `pytest`).
+- [x] Fase 10: Empaquetado y distribución.
+  - Metadatos de build Flet (`[tool.flet]`: `product`, `org`, `company`,
+    `description`) y versionado desde `[project].version`.
+  - Icono y nombre de aplicación; `CHANGELOG.md` con el historial de fases.
+  - Workflow `release.yml` (GitHub Actions) que compila el ejecutable Linux en
+    `ubuntu-latest` y sube el artefacto (disparable por tag `v*` o manual).
+  - Documentación de instalación y build para usuarios finales.
 
 ## Estado
 
