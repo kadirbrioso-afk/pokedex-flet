@@ -22,9 +22,13 @@ def _evolution_names(chain: EvolutionChain | None) -> list[str]:
     return names
 
 
-def _display_name(pokemon: PokemonDetail, species: PokemonSpecies | None) -> str:
-    if species is not None and species.spanish_name:
-        return species.spanish_name
+def _display_name(
+    pokemon: PokemonDetail, species: PokemonSpecies | None, lang: str = "es"
+) -> str:
+    if species is not None:
+        localized = species.localized_name(lang)
+        if localized:
+            return localized
     return pokemon.name.replace("-", " ").title()
 
 
@@ -49,13 +53,14 @@ def build_comparison_side(
     pokemon: PokemonDetail,
     species: PokemonSpecies | None,
     chain: EvolutionChain | None,
+    lang: str = "es",
 ) -> ComparisonSide:
     """Construye un lado de la comparación a partir de un detalle resuelto."""
     stats = {stat.name: stat.value for stat in pokemon.stats}
     return ComparisonSide(
         id=pokemon.id,
         name=pokemon.name,
-        display_name=_display_name(pokemon, species),
+        display_name=_display_name(pokemon, species, lang),
         sprite_url=pokemon.sprites.get("front_default") or None,
         types=[type_.name for type_ in pokemon.types],
         abilities=[ability.name for ability in pokemon.abilities],

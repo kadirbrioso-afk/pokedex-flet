@@ -4,6 +4,20 @@ Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog
 
 ## [Unreleased]
 
+### Fase 14 - Internacionalización (ES/EN)
+- Nuevo módulo `app/i18n`: catálogo bilingüe con más de 150 claves, clase
+  `Translator` (idioma activo), funciones `t()`/`set_language()` y fallbacks a
+  `es` y a la propia clave.
+- `PokemonSpecies` ahora guarda `names` y `descriptions` (dicts por idioma)
+  además de `spanish_name`/`description` (backward compatible), con
+  `localized_name(lang)` y `localized_description(lang)` con fallbacks.
+- Selector de idioma en la AppBar (botón TRANSLATE): alterna ES/EN y
+  re-renderiza la vista activa (home, comparador o tabla de tipos).
+- La vista de detalle se muestra localizada (tabs, campos, nombre y descripción
+  de especie en el idioma activo).
+- El comparador y la tabla de tipos traducen sus textos y usan el idioma activo
+  para los nombres (`CompareService.compare(..., lang=...)`).
+
 ### Fase 11 - Favoritos y persistencia local
 - Nuevo `LocalStore` (repositorio JSON atómico en
   `~/.local/share/pokedex-flet/local.json`) que persiste favoritos, últimos

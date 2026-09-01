@@ -6,6 +6,7 @@ import flet as ft
 
 from app.models.evolution import EvolutionChain
 from app.models.pokemon import PokemonSummary
+from app.models.species import PokemonSpecies
 from app.models.type_chart import TypeDamages, combine_types
 from app.services.parsers import (
     evolution_chain_from_json,
@@ -18,6 +19,7 @@ from app.ui.components.pokemon_card import build_pokemon_card
 from app.ui.components.stat_bar import build_stat_bar
 from app.ui.mock_data import mock_pokemon
 from app.ui.views.detail_view import (
+    _display_name,
     build_detail,
     build_empty_detail,
     build_pokemon_detail,
@@ -176,6 +178,28 @@ def test_build_pokemon_detail_with_click_callback(
         on_pokemon_clicked=on_clicked,
     )
     assert isinstance(control.content, ft.Tabs)
+
+
+def test_display_name_uses_localized_language() -> None:
+    pokemon = pokemon_detail_from_json(
+        {"id": 25, "name": "pikachu", "sprites": {}}
+    )
+    species = PokemonSpecies(
+        id=25,
+        name="pikachu",
+        spanish_name="Pikachu",
+        names={"es": "Pikachu", "en": "Pikachu", "ja": "ピカチュウ"},
+    )
+    assert _display_name(pokemon, species, "ja") == "ピカチュウ"
+    assert _display_name(pokemon, species, "en") == "Pikachu"
+    assert _display_name(pokemon, species, "es") == "Pikachu"
+
+
+def test_display_name_falls_back_without_species() -> None:
+    pokemon = pokemon_detail_from_json(
+        {"id": 25, "name": "pikachu", "sprites": {}}
+    )
+    assert _display_name(pokemon, None, "en") == "Pikachu"
 
 
 def test_build_type_chart() -> None:

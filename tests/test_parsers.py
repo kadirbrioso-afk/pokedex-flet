@@ -95,6 +95,18 @@ def test_parse_species_extras(species_json: dict) -> None:
     assert species.growth_rate == "medium"
 
 
+def test_parse_species_dictionaries(species_json: dict) -> None:
+    species = pokemon_species_from_json(species_json)
+    assert "es" in species.names
+    assert "en" in species.names
+    assert species.names["es"] == "Pikachu"
+    assert species.names["en"] == "Pikachu"
+    assert "es" in species.descriptions
+    assert "en" in species.descriptions
+    assert species.descriptions["es"]
+    assert species.descriptions["en"]
+
+
 def test_parse_species_without_optional(species_json: dict) -> None:
     minimal = {"id": 25, "name": "pikachu", "names": [], "flavor_text_entries": []}
     species = pokemon_species_from_json(minimal)

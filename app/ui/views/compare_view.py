@@ -7,6 +7,7 @@ from typing import Any
 
 import flet as ft
 
+from app.i18n import t, translator
 from app.models.compare import PokemonComparison
 from app.services.compare_service import CompareService
 from app.services.pokeapi_client import (
@@ -83,7 +84,7 @@ def _header_row(comparison: PokemonComparison) -> ft.Row:
                 ),
                 ft.Row(
                     [_type_badge(t) for t in side.types] or [
-                        ft.Text("Sin tipos", color=ft.Colors.GREY)
+                        ft.Text(t("compare.no_types"), color=ft.Colors.GREY)
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                     spacing=4,
@@ -171,10 +172,10 @@ def _abilities_text(names: list[str]) -> str:
 
 def _victory_badge(left: int, right: int) -> ft.Text:
     if left == right:
-        return ft.Text("Empate", size=12, color=ft.Colors.GREY)
+        return ft.Text(t("compare.tie"), size=12, color=ft.Colors.GREY)
     winner = "A" if left > right else "B"
     return ft.Text(
-        f"Gana {winner}",
+        t("compare.wins", side=winner),
         size=12,
         color=ft.Colors.GREEN,
         weight=ft.FontWeight.BOLD,
@@ -196,18 +197,19 @@ def build_comparison(comparison: PokemonComparison) -> ft.Control:
                 )
             )
 
-    evolution_left = " → ".join(left.evolution_names) or "Sin cadena"
-    evolution_right = " → ".join(right.evolution_names) or "Sin cadena"
+    evolution_left = " → ".join(left.evolution_names) or t("compare.no_chain")
+    evolution_right = " → ".join(right.evolution_names) or t("compare.no_chain")
 
-    total_left = _column("Total", str(left.total_stats))
-    total_right = _column("Total", str(right.total_stats))
+    total_label = t("compare.total")
+    total_left = _column(total_label, str(left.total_stats))
+    total_right = _column(total_label, str(right.total_stats))
     total_verdict = _victory_badge(left.total_stats, right.total_stats)
 
     return ft.ListView(
         controls=[
             _header_row(comparison),
             ft.Divider(height=12),
-            _section("Total de stats"),
+            _section(t("compare.total_stats")),
             ft.Row(
                 [
                     total_left,
@@ -218,10 +220,10 @@ def build_comparison(comparison: PokemonComparison) -> ft.Control:
                 spacing=12,
             ),
             ft.Divider(height=12),
-            _section("Stats"),
+            _section(t("compare.stats")),
             *stat_rows,
             ft.Divider(height=12),
-            _section("Habilidades"),
+            _section(t("compare.abilities")),
             _rows_pair(
                 [
                     ft.Text(
@@ -237,7 +239,7 @@ def build_comparison(comparison: PokemonComparison) -> ft.Control:
                 ],
             ),
             ft.Divider(height=12),
-            _section("Evolución"),
+            _section(t("compare.evolution")),
             _rows_pair(
                 [ft.Text(evolution_left, text_align=ft.TextAlign.CENTER)],
                 [ft.Text(evolution_right, text_align=ft.TextAlign.CENTER)],
@@ -267,22 +269,22 @@ class CompareView:
         self._name_a = ft.Text("—", size=14, weight=ft.FontWeight.BOLD)
         self._name_b = ft.Text("—", size=14, weight=ft.FontWeight.BOLD)
         self._pick_a_button = ft.OutlinedButton(
-            "Elegir A",
+            t("compare.pick_a"),
             icon=ft.Icons.ADD,
             on_click=self._make_pick(lambda: on_pick_a()),
         )
         self._pick_b_button = ft.OutlinedButton(
-            "Elegir B",
+            t("compare.pick_b"),
             icon=ft.Icons.ADD,
             on_click=self._make_pick(lambda: on_pick_b()),
         )
         self._compare_button = ft.FilledButton(
-            "Comparar",
+            t("compare.compare"),
             icon=ft.Icons.COMPARE_ARROWS,
             on_click=self._on_compare,
         )
         self._close_button = ft.FilledTonalButton(
-            "Volver",
+            t("compare.back"),
             icon=ft.Icons.ARROW_BACK,
             on_click=self._on_close_clicked,
         )
@@ -304,10 +306,10 @@ class CompareView:
                     content=ft.Row(
                         [
                             self._side_block(
-                                "Pokémon A", self._name_a, self._pick_a_button
+                                t("compare.title_a"), self._name_a, self._pick_a_button
                             ),
                             self._side_block(
-                                "Pokémon B", self._name_b, self._pick_b_button
+                                t("compare.title_b"), self._name_b, self._pick_b_button
                             ),
                         ],
                         spacing=16,
@@ -364,9 +366,7 @@ class CompareView:
         right = self._right_name
         if not left or not right:
             self._page.show_dialog(
-                ft.SnackBar(
-                    ft.Text("Selecciona ambos Pokémon (A y B) para comparar.")
-                )
+                ft.SnackBar(ft.Text(t("compare.need_both")))
             )
             self._page.update()
             return
@@ -374,14 +374,16 @@ class CompareView:
 
     async def _run_compare(self, left: str, right: str) -> None:
         self._compare_button.disabled = True
-        self._result.content = build_loading("Comparando…")
+        self._result.content = build_loading(t("compare.comparing"))
         self._page.update()
         try:
-            comparison = await self._compare_service.compare(left, right)
+            comparison = await self._compare_service.compare(
+                left, right, lang=translator.lang
+            )
         except PokemonNotFoundError as exc:
-            self._result.content = build_error(f"No encontrado: {exc}")
+            self._result.content = build_error(t("compare.not_found", error=str(exc)))
         except (NetworkError, PokeAPIError) as exc:
-            self._result.content = build_error(f"Error al comparar: {exc}")
+            self._result.content = build_error(t("compare.error", error=str(exc)))
         else:
             self._result.content = build_comparison(comparison)
         finally:

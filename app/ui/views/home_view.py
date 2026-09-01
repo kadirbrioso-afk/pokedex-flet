@@ -8,6 +8,7 @@ from typing import Any
 
 import flet as ft
 
+from app.i18n import t, translator
 from app.models.evolution import EvolutionChain
 from app.models.generation import GenerationSummary
 from app.models.pokemon import PokemonDetail, PokemonSummary
@@ -67,7 +68,7 @@ class HomeView:
         self._list_container = ft.Container(expand=True)
         self._detail_container = ft.Container(width=360)
         self._filter_field = ft.TextField(
-            hint_text="Filtrar en esta generación…",
+            hint_text=t("home.filter_hint"),
             prefix_icon=ft.Icons.FILTER_LIST,
             expand=True,
             dense=True,
@@ -77,21 +78,21 @@ class HomeView:
             value="id",
             width=150,
             dense=True,
-            label="Orden",
+            label=t("home.sort_label"),
             options=[
-                ft.dropdown.Option(key="id", text="Por ID"),
-                ft.dropdown.Option(key="name", text="Por nombre"),
+                ft.dropdown.Option(key="id", text=t("home.sort.id")),
+                ft.dropdown.Option(key="name", text=t("home.sort.name")),
             ],
             on_select=self._on_sort_change,
         )
-        self._page_label = ft.Text("0 resultados")
+        self._page_label = ft.Text(t("home.results.zero"))
         self._prev_button = ft.FilledTonalButton(
-            "Anterior",
+            t("home.prev"),
             icon=ft.Icons.NAVIGATE_BEFORE,
             on_click=self._on_prev_page,
         )
         self._next_button = ft.FilledTonalButton(
-            "Siguiente",
+            t("home.next"),
             icon=ft.Icons.NAVIGATE_NEXT,
             on_click=self._on_next_page,
         )
@@ -105,14 +106,14 @@ class HomeView:
             spacing=16,
         )
         self._search_field = ft.TextField(
-            hint_text="Nombre o ID (ej. pikachu, 25)",
+            hint_text=t("home.search_hint"),
             expand=True,
             dense=True,
             on_submit=self._on_search,
             on_change=self._on_search_change,
         )
         self._search_button = ft.FilledButton(
-            "Buscar",
+            t("home.search"),
             icon=ft.Icons.SEARCH,
             on_click=self._on_search,
         )
@@ -124,7 +125,7 @@ class HomeView:
             destinations=[
                 ft.NavigationRailDestination(
                     icon=ft.Icons.GRID_VIEW,
-                    label="Cargando…",
+                    label=t("home.loading_generations"),
                 )
             ],
             on_change=self._on_generation_selected,
@@ -163,7 +164,7 @@ class HomeView:
 
     def _begin_pick(self, side: str) -> None:
         self._pending_side = side
-        self._show_home_for_picking(f"Selecciona Pokémon {side} en la lista")
+        self._show_home_for_picking(t("home.pick_header", side=side))
         self._page.update()
 
     def _assign_pending(self, name: str) -> None:
@@ -207,8 +208,8 @@ class HomeView:
         self._page.update()
 
     def build(self) -> ft.Stack:
-        self._header_text.value = "Pokédex"
-        self._list_container.content = build_loading("Cargando generaciones…")
+        self._header_text.value = t("home.pokedex")
+        self._list_container.content = build_loading(t("home.loading_generations"))
         self._detail_container.content = build_empty_detail()
         self._home_row = ft.Row(
             [
@@ -250,7 +251,7 @@ class HomeView:
             generations = await self._generation_service.get_generations()
         except (NetworkError, PokeAPIError) as exc:
             self._list_container.content = build_error(
-                f"Error al cargar las generaciones: {exc}",
+                t("home.error_generations", error=str(exc)),
                 on_retry=self._make_generations_retry(),
             )
             self._page.update()
@@ -278,7 +279,7 @@ class HomeView:
         self._filter_text = ""
         if offline:
             self._view_mode = VIEW_OFFLINE
-            self._header_text.value = "Modo offline — visitados"
+            self._header_text.value = t("home.offline_header")
             self._summaries = self._offline_summaries()
         else:
             self._restore_after_special_view()
@@ -291,7 +292,9 @@ class HomeView:
         self._filter_text = ""
         if on:
             self._view_mode = VIEW_FAVORITES
-            self._header_text.value = f"Favoritos ({len(self._store.list_favorites())})"
+            self._header_text.value = t(
+                "home.favorites_header", count=len(self._store.list_favorites())
+            )
             self._summaries = self._favorite_summaries()
         else:
             self._restore_after_special_view()
@@ -306,6 +309,39 @@ class HomeView:
             )
         else:
             self._summaries = []
+
+    def set_language(self, lang: str) -> None:
+        """Cambia el idioma activo y re-renderiza la UI visible."""
+        self._state.lang = lang
+        translator.set_lang(lang)
+        self._filter_field.hint_text = t("home.filter_hint")
+        self._sort_dropdown.label = t("home.sort_label")
+        self._sort_dropdown.options = [
+            ft.dropdown.Option(key="id", text=t("home.sort.id")),
+            ft.dropdown.Option(key="name", text=t("home.sort.name")),
+        ]
+        self._search_field.hint_text = t("home.search_hint")
+        self._search_button.content = t("home.search")
+        self._prev_button.content = t("home.prev")
+        self._next_button.content = t("home.next")
+        if self._view_mode == VIEW_OFFLINE:
+            self._header_text.value = t("home.offline_header")
+        elif self._view_mode == VIEW_FAVORITES:
+            self._header_text.value = t(
+                "home.favorites_header", count=len(self._store.list_favorites())
+            )
+        elif self._pending_side is not None:
+            self._header_text.value = t("home.pick_header", side=self._pending_side)
+        else:
+            generation = self._current_generation()
+            if generation is not None:
+                self._update_header(generation)
+            else:
+                self._header_text.value = t("home.pokedex")
+        self._type_chart_container.content = self._type_chart.build()
+        self._compare_container.content = self._compare.build()
+        self._render_pokemon_list()
+        self._page.update()
 
     def _offline_summaries(self) -> list[PokemonSummary]:
         summaries: list[PokemonSummary] = []
@@ -340,7 +376,9 @@ class HomeView:
 
     def _update_header(self, generation: GenerationSummary) -> None:
         region = region_name(generation.id, generation.name.title())
-        self._header_text.value = f"Generación {generation.id} — {region}"
+        self._header_text.value = t(
+            "home.generation_header", id=generation.id, region=region
+        )
 
     def _visible_summaries(self) -> list[PokemonSummary]:
         summaries = self._summaries
@@ -382,7 +420,7 @@ class HomeView:
         else:
             controls = [
                 ft.Text(
-                    "Sin resultados para el filtro.",
+                    t("home.no_results_filter"),
                     color=ft.Colors.GREY,
                     italic=True,
                 )
@@ -398,9 +436,12 @@ class HomeView:
 
         start = self._offset + 1 if total else 0
         end = min(self._offset + PAGE_SIZE, total)
-        self._page_label.value = (
-            f"{start}–{end} de {total}" if total else "0 resultados"
-        )
+        if total:
+            self._page_label.value = t(
+                "home.pagination", start=start, end=end, total=total
+            )
+        else:
+            self._page_label.value = t("home.results.zero")
         self._prev_button.disabled = self._offset <= 0
         self._next_button.disabled = self._offset + PAGE_SIZE >= total
 
@@ -412,7 +453,7 @@ class HomeView:
         self._list_container.content = ft.Column(
             [
                 ft.ProgressBar(),
-                build_loading(f"Cargando generación {generation.id}…"),
+                build_loading(t("home.loading_generation", id=generation.id)),
             ],
             spacing=8,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -425,7 +466,7 @@ class HomeView:
             )
         except (NetworkError, PokeAPIError) as exc:
             self._list_container.content = build_error(
-                f"Error al cargar la generación {generation.id}: {exc}",
+                t("home.error_generation", id=generation.id, error=str(exc)),
                 on_retry=self._make_generation_retry(index),
             )
             self._page.update()
@@ -497,7 +538,7 @@ class HomeView:
 
     async def _open_detail(self, pokemon_id: int, name: str) -> None:
         self._state.selected_pokemon_id = pokemon_id
-        self._detail_container.content = build_loading("Cargando detalle…")
+        self._detail_container.content = build_loading(t("home.loading_detail"))
         self._render_pokemon_list()
         self._page.update()
         try:
@@ -506,11 +547,11 @@ class HomeView:
             )
         except PokemonNotFoundError:
             self._detail_container.content = build_error(
-                f"Pokémon «{name}» no encontrado."
+                t("home.not_found", name=name)
             )
         except (NetworkError, PokeAPIError) as exc:
             self._detail_container.content = build_error(
-                f"Error al cargar el detalle: {exc}",
+                t("home.error_detail", error=str(exc)),
                 on_retry=self._make_detail_retry(pokemon_id, name),
             )
         else:
@@ -540,6 +581,7 @@ class HomeView:
             on_pokemon_clicked=self._open_detail,
             is_favorite=self._store.is_favorite(pokemon.id),
             on_toggle_favorite=self._make_toggle_favorite(pokemon, species, chain),
+            lang=self._state.lang,
         )
 
     def _make_toggle_favorite(
@@ -556,8 +598,8 @@ class HomeView:
             )
             if self._view_mode == VIEW_FAVORITES:
                 self._summaries = self._favorite_summaries()
-                self._header_text.value = (
-                    f"Favoritos ({len(self._store.list_favorites())})"
+                self._header_text.value = t(
+                    "home.favorites_header", count=len(self._store.list_favorites())
                 )
                 self._render_pokemon_list()
             self._detail_container.content = (
@@ -596,7 +638,7 @@ class HomeView:
         query = self._current_query()
         if not query:
             self._page.show_dialog(
-                ft.SnackBar(ft.Text("Escribe un nombre o ID para buscar."))
+                ft.SnackBar(ft.Text(t("home.empty_query")))
             )
             self._page.update()
             return
@@ -621,7 +663,7 @@ class HomeView:
     async def _run_search(self, query: str) -> None:
         self._state.last_search = query
         self._set_search_loading(True)
-        self._detail_container.content = build_loading("Buscando…")
+        self._detail_container.content = build_loading(t("home.searching"))
         self._page.update()
         try:
             pokemon, species = await self._pokemon_service.get_pokemon_with_species(
@@ -629,11 +671,11 @@ class HomeView:
             )
         except PokemonNotFoundError:
             self._detail_container.content = build_error(
-                f"No hay ningún Pokémon llamado «{query}»."
+                t("home.no_pokemon_named", query=query)
             )
         except (NetworkError, PokeAPIError) as exc:
             self._detail_container.content = build_error(
-                f"Error al buscar: {exc}",
+                t("home.error_search", error=str(exc)),
                 on_retry=self._make_retry(query),
             )
         else:

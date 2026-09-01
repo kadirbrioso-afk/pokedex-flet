@@ -9,6 +9,7 @@ import flet as ft
 
 from app import __version__
 from app.core.config import AppConfig
+from app.i18n import LANGUAGES, t, translator
 from app.services.compare_service import CompareService
 from app.services.generation_service import GenerationService
 from app.services.local_store import LocalStore
@@ -27,12 +28,14 @@ def _build_app_bar(
     on_favorites_toggle: Callable[[bool], Any] | None = None,
     on_compare_toggle: Callable[[bool], Any] | None = None,
     on_type_chart_toggle: Callable[[bool], Any] | None = None,
+    on_language_toggle: Callable[[str], Any] | None = None,
 ) -> ft.AppBar:
     dark_mode = False
     offline = False
     favorites = False
     compare = False
     type_chart = False
+    language = translator.lang
 
     def toggle_theme(_: Any) -> None:
         nonlocal dark_mode
@@ -64,6 +67,13 @@ def _build_app_bar(
         if on_type_chart_toggle:
             on_type_chart_toggle(type_chart)
 
+    def toggle_language(_: Any) -> None:
+        nonlocal language
+        index = LANGUAGES.index(language)
+        language = LANGUAGES[1 - index]
+        if on_language_toggle:
+            on_language_toggle(language)
+
     return ft.AppBar(
         title=ft.Text(title),
         center_title=True,
@@ -73,32 +83,38 @@ def _build_app_bar(
             ft.IconButton(
                 icon=ft.Icons.GRID_ON,
                 icon_color=ft.Colors.WHITE,
-                tooltip="Tabla de tipos",
+                tooltip=t("appbar.typechart"),
                 on_click=toggle_type_chart,
             ),
             ft.IconButton(
                 icon=ft.Icons.COMPARE_ARROWS,
                 icon_color=ft.Colors.WHITE,
-                tooltip="Comparar Pokémon",
+                tooltip=t("appbar.compare"),
                 on_click=toggle_compare,
             ),
             ft.IconButton(
                 icon=ft.Icons.FAVORITE,
                 icon_color=ft.Colors.AMBER,
-                tooltip="Ver favoritos",
+                tooltip=t("appbar.favorites"),
                 on_click=toggle_favorites,
             ),
             ft.IconButton(
                 icon=ft.Icons.CLOUD_OFF,
                 icon_color=ft.Colors.WHITE,
-                tooltip="Modo offline (visitados)",
+                tooltip=t("appbar.offline"),
                 on_click=toggle_offline,
             ),
             ft.IconButton(
                 icon=ft.Icons.DARK_MODE,
                 icon_color=ft.Colors.WHITE,
-                tooltip="Cambiar tema",
+                tooltip=t("appbar.theme"),
                 on_click=toggle_theme,
+            ),
+            ft.IconButton(
+                icon=ft.Icons.TRANSLATE,
+                icon_color=ft.Colors.WHITE,
+                tooltip=t("appbar.language"),
+                on_click=toggle_language,
             ),
         ],
     )
@@ -136,6 +152,7 @@ def start(page: ft.Page) -> None:
         home.set_favorites,
         home.set_compare,
         home.set_type_chart,
+        home.set_language,
     )
     page.add(home.build())
     page.run_task(home.load_initial)

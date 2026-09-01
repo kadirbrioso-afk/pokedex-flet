@@ -7,6 +7,7 @@ from typing import Any
 
 import flet as ft
 
+from app.i18n import t
 from app.models.evolution import EvolutionChain, EvolutionNode
 from app.models.pokemon import PokemonDetail, PokemonMove, PokemonSummary
 from app.models.species import PokemonSpecies
@@ -29,20 +30,20 @@ _METHOD_ORDER = {
     "tutor": 3,
 }
 
-_METHOD_LABELS = {
-    "level-up": "Por nivel",
-    "machine": "Máquinas (MT/MO)",
-    "egg": "Huevo",
-    "tutor": "Tutor",
+_METHOD_LABELS: dict[str, str] = {
+    "level-up": "detail.method.level",
+    "machine": "detail.method.machine",
+    "egg": "detail.method.egg",
+    "tutor": "detail.method.tutor",
 }
 
 _MEDIA_SOURCES = [
-    ("Normal", "front_default"),
-    ("Shiny", "front_shiny"),
-    ("Trasera", "back_default"),
-    ("Trasera shiny", "back_shiny"),
-    ("Oficial", "official_artwork"),
-    ("Home", "home"),
+    ("detail.media.normal", "front_default"),
+    ("detail.media.shiny", "front_shiny"),
+    ("detail.media.back", "back_default"),
+    ("detail.media.back_shiny", "back_shiny"),
+    ("detail.media.official", "official_artwork"),
+    ("detail.media.home", "home"),
 ]
 
 
@@ -58,7 +59,7 @@ def _mock_stats(pokemon_id: int) -> list[tuple[str, int]]:
 def build_empty_detail() -> ft.Container:
     return ft.Container(
         content=ft.Text(
-            "Selecciona un Pokémon para ver su detalle",
+            t("detail.select_pokemon"),
             color=ft.Colors.GREY,
             text_align=ft.TextAlign.CENTER,
         ),
@@ -119,7 +120,7 @@ def _type_badges(pokemon: PokemonDetail) -> ft.Row:
         for type_name in pokemon.types
     ]
     if not badges:
-        badges = [ft.Text("Sin tipos", color=ft.Colors.GREY)]
+        badges = [ft.Text(t("detail.no_types"), color=ft.Colors.GREY)]
     return ft.Row(badges, spacing=6)
 
 
@@ -133,14 +134,20 @@ def _info_row(label: str, value: str) -> ft.Row:
     )
 
 
-def _display_name(pokemon: PokemonDetail, species: PokemonSpecies | None) -> str:
-    if species is not None and species.spanish_name:
-        return species.spanish_name
+def _display_name(
+    pokemon: PokemonDetail,
+    species: PokemonSpecies | None,
+    lang: str = "es",
+) -> str:
+    if species is not None:
+        localized = species.localized_name(lang)
+        if localized:
+            return localized
     return pokemon.name.replace("-", " ").title()
 
 
 def _missing(value: str | None) -> str:
-    return value or "No disponible"
+    return value or t("detail.not_available")
 
 
 def _tabs_from_panels(panels: list[tuple[str, ft.Control]]) -> ft.Tabs:
@@ -168,6 +175,7 @@ def _info_panel(
     species: PokemonSpecies | None,
     is_favorite: bool = False,
     on_toggle_favorite: Callable[[], Any] | None = None,
+    lang: str = "es",
 ) -> ft.Control:
     images: dict[str, str] = {
         "normal": pokemon.sprites.get("front_default")
@@ -201,31 +209,36 @@ def _info_panel(
         value=selected_key,
         width=150,
         dense=True,
-        label="Vista",
+        label=t("detail.view_label"),
         options=[
-            ft.dropdown.Option(key="normal", text="Normal"),
-            ft.dropdown.Option(key="shiny", text="Shiny"),
-            ft.dropdown.Option(key="artwork", text="Artwork"),
+            ft.dropdown.Option(key="normal", text=t("detail.view.normal")),
+            ft.dropdown.Option(key="shiny", text=t("detail.view.shiny")),
+            ft.dropdown.Option(key="artwork", text=t("detail.view.artwork")),
         ],
         on_select=on_view_select,
     )
 
     ability_text = ", ".join(
         ability.name.replace("-", " ").title()
-        + (" (oculta)" if ability.is_hidden else "")
+        + (t("detail.hidden_suffix") if ability.is_hidden else "")
         for ability in pokemon.abilities
-    ) or "No disponible"
+    ) or t("detail.not_available")
+    missing = t("detail.not_available")
     experience = (
-        str(pokemon.base_experience) if pokemon.base_experience else "No disponible"
+        str(pokemon.base_experience) if pokemon.base_experience else missing
     )
-    height = f"{pokemon.height / 10:.1f} m" if pokemon.height else "No disponible"
-    weight = f"{pokemon.weight / 10:.1f} kg" if pokemon.weight else "No disponible"
-    description = species.description if species and species.description else None
+    height = f"{pokemon.height / 10:.1f} m" if pokemon.height else missing
+    weight = f"{pokemon.weight / 10:.1f} kg" if pokemon.weight else missing
+    description = (
+        species.localized_description(lang) if species is not None else None
+    )
 
     favorite = ft.IconButton(
         icon=ft.Icons.STAR if is_favorite else ft.Icons.STAR_BORDER,
         icon_color=ft.Colors.AMBER if is_favorite else ft.Colors.GREY,
-        tooltip="Quitar de favoritos" if is_favorite else "Añadir a favoritos",
+        tooltip=(
+            t("detail.favorite.remove") if is_favorite else t("detail.favorite.add")
+        ),
         on_click=(lambda _: on_toggle_favorite()) if on_toggle_favorite else None,
     )
 
@@ -241,7 +254,7 @@ def _info_panel(
             ft.Row(
                 [
                     ft.Text(
-                        _display_name(pokemon, species),
+                        _display_name(pokemon, species, lang),
                         size=24,
                         weight=ft.FontWeight.BOLD,
                         expand=True,
@@ -258,16 +271,16 @@ def _info_panel(
             )
             if description
             else ft.Text(
-                "Sin descripción disponible",
+                t("detail.no_description"),
                 italic=True,
                 color=ft.Colors.GREY,
             ),
             ft.Divider(height=12),
-            _info_row("Experiencia base", experience),
-            _info_row("Altura", height),
-            _info_row("Peso", weight),
+            _info_row(t("detail.base_experience"), experience),
+            _info_row(t("detail.height"), height),
+            _info_row(t("detail.weight"), weight),
             ft.Divider(height=12),
-            _info_row("Habilidades", ability_text),
+            _info_row(t("detail.abilities"), ability_text),
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=6,
@@ -280,7 +293,7 @@ def _stats_panel(pokemon: PokemonDetail) -> ft.Control:
     stats = {stat.name: stat.value for stat in pokemon.stats}
     total = sum(stats.values())
     rows: list[ft.Control] = [
-        ft.Text(f"Total: {total}", size=16, weight=ft.FontWeight.BOLD),
+        ft.Text(t("detail.total", total=total), size=16, weight=ft.FontWeight.BOLD),
     ]
     for name in STAT_ORDER:
         if name in stats:
@@ -295,25 +308,25 @@ def _stats_panel(pokemon: PokemonDetail) -> ft.Control:
 
 def _time_of_day_text(value: str) -> str:
     return {
-        "day": "de día",
-        "night": "de noche",
-        "dusk": "al atardecer",
-        "dawn": "al amanecer",
+        "day": t("detail.time.day"),
+        "night": t("detail.time.night"),
+        "dusk": t("detail.time.dusk"),
+        "dawn": t("detail.time.dawn"),
     }.get(value, value.replace("-", " "))
 
 
 def _evolution_gender_text(value: int) -> str:
-    return {1: "solo macho", 2: "solo hembra"}.get(
-        value, "con género específico"
+    return {1: t("detail.gender.only_male"), 2: t("detail.gender.only_female")}.get(
+        value, t("detail.gender.specific")
     )
 
 
 def _relative_stats_text(value: int) -> str:
     if value == 1:
-        return "con Ataque > Defensa"
+        return t("detail.relative.atk_gt_def")
     if value == -1:
-        return "con Ataque < Defensa"
-    return "con Ataque = Defensa"
+        return t("detail.relative.atk_lt_def")
+    return t("detail.relative.atk_eq_def")
 
 
 def _item_title(name: str) -> str:
@@ -324,30 +337,30 @@ def _condition_parts(node: EvolutionNode) -> list[str]:
     parts: list[str] = []
     trigger = node.trigger
     if node.trade or trigger == "trade":
-        base = "Intercambiar"
+        base = t("detail.cond.trade")
         if node.held_item:
-            base += f" sosteniendo {_item_title(node.held_item)}"
+            base += f" {t('detail.cond.holding')} {_item_title(node.held_item)}"
         parts.append(base)
     elif node.min_happiness is not None:
-        parts.append(f"Amistad (mín. {node.min_happiness})")
+        parts.append(f"{t('detail.cond.friendship')} (min. {node.min_happiness})")
     elif node.happiness or trigger == "happiness":
-        parts.append("Amistad")
+        parts.append(t("detail.cond.friendship"))
     elif node.held_item:
-        parts.append(f"Sosteniendo {_item_title(node.held_item)}")
+        parts.append(f"{t('detail.cond.holding')} {_item_title(node.held_item)}")
     elif node.item:
-        parts.append(f"Usar {_item_title(node.item)}")
+        parts.append(f"{t('detail.cond.use')} {_item_title(node.item)}")
     elif node.min_level:
-        parts.append(f"Nivel {node.min_level}")
+        parts.append(f"{t('detail.cond.level')} {node.min_level}")
     elif node.known_move:
-        parts.append(f"Conociendo {_item_title(node.known_move)}")
+        parts.append(f"{t('detail.cond.known_move')} {_item_title(node.known_move)}")
     elif node.location:
-        parts.append(f"En {_item_title(node.location)}")
+        parts.append(f"{t('detail.cond.at')} {_item_title(node.location)}")
     elif trigger == "level-up":
-        parts.append("Subir de nivel")
+        parts.append(t("detail.cond.level_up"))
     elif trigger == "use-item":
-        parts.append("Usar objeto")
+        parts.append(t("detail.cond.use_item"))
     elif trigger == "shed":
-        parts.append("Desechar la piel")
+        parts.append(t("detail.cond.shed"))
     elif trigger:
         parts.append(_item_title(trigger))
 
@@ -358,13 +371,13 @@ def _condition_parts(node: EvolutionNode) -> list[str]:
     if node.relative_physical_stats is not None:
         parts.append(_relative_stats_text(node.relative_physical_stats))
     if node.needs_overworld_rain:
-        parts.append("Bajo la lluvia")
+        parts.append(t("detail.cond.rain"))
     return parts
 
 
 def _condition_arrow(node: EvolutionNode) -> ft.Control:
     parts = _condition_parts(node)
-    text = " · ".join(parts) or "Evoluciona"
+    text = " · ".join(parts) or t("detail.cond.evolves")
     arrow = ft.Text(
         f"↓ {text}",
         size=11,
@@ -448,7 +461,7 @@ def _evolution_panel(
 ) -> ft.Control:
     if chain is None:
         return ft.Text(
-            "Este Pokémon no tiene cadena evolutiva registrada.",
+            t("detail.evolution_none"),
             italic=True,
             color=ft.Colors.GREY,
         )
@@ -490,9 +503,9 @@ def _moves_panel(pokemon: PokemonDetail) -> ft.Control:
                     move.name,
                 ),
             )
-        rows.append(ft.Text(label, weight=ft.FontWeight.BOLD, size=13))
+        rows.append(ft.Text(t(label), weight=ft.FontWeight.BOLD, size=13))
         for move in moves:
-            suffix = f" — Nivel {move.level}" if move.level else ""
+            suffix = f" — {t('detail.level')} {move.level}" if move.level else ""
             rows.append(
                 ft.Text(
                     f"• {move.name.replace('-', ' ').title()}{suffix}",
@@ -502,7 +515,7 @@ def _moves_panel(pokemon: PokemonDetail) -> ft.Control:
     if not rows:
         rows = [
             ft.Text(
-                "No hay movimientos registrados.",
+                t("detail.no_moves"),
                 italic=True,
                 color=ft.Colors.GREY,
             )
@@ -517,9 +530,9 @@ def _moves_panel(pokemon: PokemonDetail) -> ft.Control:
 
 def _gender_text(gender_rate: int | None) -> str:
     if gender_rate is None:
-        return "No disponible"
+        return t("detail.not_available")
     if gender_rate == -1:
-        return "Sin género"
+        return t("detail.no_gender")
     female_pct = gender_rate / 8 * 100
     male_pct = 100 - female_pct
     return f"♂ {male_pct:.0f}% · ♀ {female_pct:.0f}%"
@@ -531,40 +544,41 @@ def _species_panel(
 ) -> ft.Control:
     if species is None:
         return ft.Text(
-            "Datos de especie no disponibles.",
+            t("detail.species_unavailable"),
             italic=True,
             color=ft.Colors.GREY,
         )
     cradle = ", ".join(
         group.replace("-", " ").title() for group in species.egg_groups
     )
+    missing = t("detail.not_available")
     return ft.Column(
         [
-            _info_row("Hábitat", _missing(species.habitat)),
-            _info_row("Color", _missing(species.color)),
-            _info_row("Forma", _missing(species.shape)),
-            _info_row("Género", _gender_text(species.gender_rate)),
+            _info_row(t("detail.habitat"), _missing(species.habitat)),
+            _info_row(t("detail.color"), _missing(species.color)),
+            _info_row(t("detail.shape"), _missing(species.shape)),
+            _info_row(t("detail.gender"), _gender_text(species.gender_rate)),
             _info_row(
-                "Ratio de captura",
-                str(species.capture_rate) if species.capture_rate else "No disponible",
+                t("detail.capture_rate"),
+                str(species.capture_rate) if species.capture_rate else missing,
             ),
             _info_row(
-                "Felicidad base",
+                t("detail.base_happiness"),
                 str(species.base_happiness)
                 if species.base_happiness
-                else "No disponible",
+                else missing,
             ),
             _info_row(
-                "Experiencia base",
+                t("detail.base_experience"),
                 str(pokemon.base_experience)
                 if pokemon.base_experience
-                else "No disponible",
+                else missing,
             ),
-            _info_row("Crecimiento", _missing(species.growth_rate)),
-            _info_row("Grupo huevo", cradle or "No disponible"),
+            _info_row(t("detail.growth_rate"), _missing(species.growth_rate)),
+            _info_row(t("detail.egg_groups"), cradle or missing),
             _info_row(
-                "Generación",
-                str(species.generation) if species.generation else "No disponible",
+                t("detail.generation"),
+                str(species.generation) if species.generation else missing,
             ),
         ],
         spacing=6,
@@ -593,7 +607,7 @@ def _media_panel(pokemon: PokemonDetail) -> ft.Control:
                             color=ft.Colors.GREY,
                         ),
                     ),
-                    ft.Text(label),
+                    ft.Text(t(label)),
                 ],
                 spacing=10,
             )
@@ -601,7 +615,7 @@ def _media_panel(pokemon: PokemonDetail) -> ft.Control:
     if not rows:
         rows = [
             ft.Text(
-                "Sin imágenes disponibles.",
+                t("detail.no_media"),
                 italic=True,
                 color=ft.Colors.GREY,
             )
@@ -621,15 +635,20 @@ def build_pokemon_detail(
     on_pokemon_clicked: Callable[[int, str], Any] | None = None,
     is_favorite: bool = False,
     on_toggle_favorite: Callable[[], Any] | None = None,
+    lang: str = "es",
 ) -> ft.Container:
     panels: list[tuple[str, ft.Control]] = [
-        ("Info", _info_panel(pokemon, species, is_favorite, on_toggle_favorite)),
-        ("Stats", _stats_panel(pokemon)),
-        ("Evolución", _evolution_panel(chain, on_pokemon_clicked)),
-        ("Movs", _moves_panel(pokemon)),
-        ("Especie", _species_panel(pokemon, species)),
-        ("Media", _media_panel(pokemon)),
+        (
+            "detail.tab.info",
+            _info_panel(pokemon, species, is_favorite, on_toggle_favorite, lang),
+        ),
+        ("detail.tab.stats", _stats_panel(pokemon)),
+        ("detail.tab.evolution", _evolution_panel(chain, on_pokemon_clicked)),
+        ("detail.tab.moves", _moves_panel(pokemon)),
+        ("detail.tab.species", _species_panel(pokemon, species)),
+        ("detail.tab.media", _media_panel(pokemon)),
     ]
+    panels = [(t(label), content) for label, content in panels]
     return ft.Container(
         content=_tabs_from_panels(panels),
         padding=16,

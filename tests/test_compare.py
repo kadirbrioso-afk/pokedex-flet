@@ -136,3 +136,35 @@ async def test_compare_service_calls_detail_full_twice(
 
     assert client.pokemon_calls == 1
     assert client.species_calls == 1
+
+
+async def test_build_comparison_side_uses_localized_lang(
+    pikachu_json: dict[str, Any],
+    species_json: dict[str, Any],
+) -> None:
+    client = FakePokeAPIClient(pokemon=pikachu_json, species=species_json)
+    service = PokemonService(client)
+
+    pokemon, species, chain = await service.get_pokemon_detail_full(25)
+    species_localized = species.model_copy(
+        update={
+            "names": {"es": "Pikachu", "en": "Pikachu", "ja": "ピカチュウ"}
+        }
+    )
+    side = build_comparison_side(pokemon, species_localized, chain, lang="ja")
+
+    assert side.display_name == "ピカチュウ"
+
+
+async def test_compare_service_threads_lang(
+    pikachu_json: dict[str, Any],
+    species_json: dict[str, Any],
+) -> None:
+    client = FakePokeAPIClient(pokemon=pikachu_json, species=species_json)
+    service = PokemonService(client)
+    compare = CompareService(service)
+
+    comparison = await compare.compare(25, 6, lang="en")
+
+    assert comparison.left.display_name == "Pikachu"
+    assert comparison.right.display_name == "Pikachu"

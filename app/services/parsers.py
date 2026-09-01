@@ -94,11 +94,21 @@ def pokemon_detail_from_json(data: dict[str, Any]) -> PokemonDetail:
     )
 
 
-def _localized_name(data: dict[str, Any]) -> str | None:
+def _localized_name(data: dict[str, Any], lang: str = "es") -> str | None:
     for entry in data.get("names", []):
-        if entry.get("language", {}).get("name") == "es":
+        if entry.get("language", {}).get("name") == lang:
             return entry.get("name")
     return None
+
+
+def _names_map(data: dict[str, Any]) -> dict[str, str]:
+    names: dict[str, str] = {}
+    for entry in data.get("names", []):
+        lang = entry.get("language", {}).get("name")
+        name = entry.get("name")
+        if isinstance(lang, str) and isinstance(name, str):
+            names[lang] = name
+    return names
 
 
 def _description(data: dict[str, Any]) -> str | None:
@@ -112,6 +122,16 @@ def _description(data: dict[str, Any]) -> str | None:
     return None
 
 
+def _descriptions_map(data: dict[str, Any]) -> dict[str, str]:
+    descriptions: dict[str, str] = {}
+    for entry in data.get("flavor_text_entries", []):
+        lang = entry.get("language", {}).get("name")
+        text = entry.get("flavor_text")
+        if isinstance(lang, str) and isinstance(text, str):
+            descriptions[lang] = text.replace("\n", " ").replace("\f", " ")
+    return descriptions
+
+
 def pokemon_species_from_json(data: dict[str, Any]) -> PokemonSpecies:
     generation_url = data.get("generation", {}).get("url")
     growth_rate = data.get("growth_rate")
@@ -121,11 +141,15 @@ def pokemon_species_from_json(data: dict[str, Any]) -> PokemonSpecies:
         if isinstance(entry.get("name"), str)
     ]
     evolution_chain = data.get("evolution_chain")
+    names = _names_map(data)
+    descriptions = _descriptions_map(data)
     return PokemonSpecies(
         id=data["id"],
         name=data["name"],
-        spanish_name=_localized_name(data),
+        spanish_name=names.get("es") or _localized_name(data),
         description=_description(data),
+        names=names,
+        descriptions=descriptions,
         habitat=data.get("habitat", {}).get("name") if data.get("habitat") else None,
         color=data.get("color", {}).get("name") if data.get("color") else None,
         shape=data.get("shape", {}).get("name") if data.get("shape") else None,

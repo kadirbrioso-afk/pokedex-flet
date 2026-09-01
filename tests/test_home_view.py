@@ -154,3 +154,22 @@ def test_views_are_mutually_exclusive() -> None:
     assert home._compare_container.visible is False
     assert home._type_chart_container.visible is True
     assert home._home_row.visible is False
+
+
+def test_set_language_updates_state_and_chrome() -> None:
+    home = _make_home()
+    home.build()
+    assert home._state.lang == "es"
+    assert home._search_button.content == "Buscar"
+    assert home._header_text.value == "Pokédex"
+
+    home.set_language("en")
+
+    assert home._state.lang == "en"
+    assert home._search_button.content == "Search"
+    assert home._prev_button.content == "Previous"
+    assert home._search_field.hint_text == "Name or ID (e.g. pikachu, 25)"
+    assert home._filter_field.hint_text == "Filter this generation…"
+
+    home.set_language("es")
+    assert home._search_button.content == "Buscar"

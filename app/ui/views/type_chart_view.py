@@ -7,6 +7,7 @@ from typing import Any
 
 import flet as ft
 
+from app.i18n import t
 from app.models.type_chart import TYPE_NAMES, TypeChartResult, TypeMultiplier
 from app.services.pokeapi_client import NetworkError, PokeAPIError
 from app.services.type_service import TypeService
@@ -19,9 +20,9 @@ NO_TYPE = "—"
 
 def _multiplier_text(value: float) -> str:
     if value == 0.0:
-        return "Inmune"
+        return t("type.immune")
     if value == 1.0:
-        return "Normal"
+        return t("type.normal_damage")
     stripped = f"{value:g}"
     return f"x{stripped}"
 
@@ -100,22 +101,22 @@ def build_type_chart(result: TypeChartResult) -> ft.Control:
             ),
             ft.Divider(height=12),
             _group(
-                "Debilidades (daño recibido x2 o más)",
+                t("type.weakness"),
                 [_type_chip(e) for e in result.weaknesses],
             ),
             ft.Divider(height=12),
             _group(
-                "Resistencias (daño recibido a la mitad o menos)",
+                t("type.resistance"),
                 [_type_chip(e) for e in result.resistances],
             ),
             ft.Divider(height=12),
             _group(
-                "Inmunidades (no recibe daño)",
+                t("type.immunity"),
                 [_type_chip(e) for e in result.immunities],
             ),
             ft.Divider(height=12),
             _group(
-                "Daño normal (x1)",
+                t("type.neutral"),
                 [_neutral_chip(name) for name in result.neutral],
             ),
         ],
@@ -143,27 +144,27 @@ class TypeChartView:
                 ft.dropdown.Option(key=t, text=t.title()) for t in TYPE_NAMES
             ]
 
-        none_option = ft.dropdown.Option(key=NO_TYPE, text="Ninguno")
+        none_option = ft.dropdown.Option(key=NO_TYPE, text=t("type.none"))
 
         self._type_a = ft.Dropdown(
-            label="Tipo 1",
+            label=t("type.type1"),
             value="normal",
             options=options(),
             dense=True,
         )
         self._type_b = ft.Dropdown(
-            label="Tipo 2 (opcional)",
+            label=t("type.type2"),
             value=NO_TYPE,
             options=[none_option, *options()],
             dense=True,
         )
         self._calculate_button = ft.FilledButton(
-            "Calcular",
+            t("type.calculate"),
             icon=ft.Icons.ONETWOTHREE,
             on_click=self._on_calculate,
         )
         self._close_button = ft.FilledTonalButton(
-            "Volver",
+            t("type.back"),
             icon=ft.Icons.ARROW_BACK,
             on_click=self._on_close_clicked,
         )
@@ -198,7 +199,7 @@ class TypeChartView:
             type_b = ""
         if not type_a:
             self._page.show_dialog(
-                ft.SnackBar(ft.Text("Selecciona al menos el Tipo 1."))
+                ft.SnackBar(ft.Text(t("type.need_type1")))
             )
             self._page.update()
             return
@@ -206,12 +207,12 @@ class TypeChartView:
 
     async def _run(self, type_a: str, type_b: str | None) -> None:
         self._calculate_button.disabled = True
-        self._result.content = build_loading("Calculando…")
+        self._result.content = build_loading(t("type.calculating"))
         self._page.update()
         try:
             result = await self._service.build_chart(type_a, type_b)
         except (NetworkError, PokeAPIError) as exc:
-            self._result.content = build_error(f"Error al calcular: {exc}")
+            self._result.content = build_error(t("type.error", error=str(exc)))
         else:
             self._result.content = build_type_chart(result)
         finally:

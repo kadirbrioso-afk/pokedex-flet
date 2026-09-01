@@ -17,13 +17,14 @@ class CompareService:
         self,
         left: str | int,
         right: str | int,
+        lang: str = "es",
     ) -> PokemonComparison:
         """Resuelve los detalles de ambos Pokémon y construye la comparación."""
         left_parts = await self._pokemon_service.get_pokemon_detail_full(left)
         right_parts = await self._pokemon_service.get_pokemon_detail_full(right)
         return PokemonComparison(
-            left=self._side(*left_parts),
-            right=self._side(*right_parts),
+            left=self._side(*left_parts, lang),
+            right=self._side(*right_parts, lang),
         )
 
     def _side(
@@ -31,5 +32,6 @@ class CompareService:
         pokemon: PokemonDetail,
         species: PokemonSpecies,
         chain: EvolutionChain | None,
+        lang: str = "es",
     ) -> ComparisonSide:
-        return build_comparison_side(pokemon, species, chain)
+        return build_comparison_side(pokemon, species, chain, lang)
