@@ -4,7 +4,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-10 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-11 completadas.
 
 ## Requisitos
 
@@ -187,7 +187,14 @@ assets/                  # Iconos e imágenes
   - Workflow `release.yml` (GitHub Actions) que compila el ejecutable Linux en
     `ubuntu-latest` y sube el artefacto (disparable por tag `v*` o manual).
   - Documentación de instalación y build para usuarios finales.
+- [x] Fase 11: Favoritos y persistencia local.
+  - `LocalStore` (JSON atómico en `~/.local/share/pokedex-flet/local.json`):
+    favoritos, últimos vistos e historial de búsqueda.
+  - Botón de estrella en el detalle para (des)marcar favorito, botón
+    «Favoritos» en la AppBar que lista los marcados.
+  - Recientes: cada visita al detalle guarda el Pokémon; historial: cada
+    búsqueda exitosa se recuerda.
 
 ## Estado
 
-Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click.
+Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON.

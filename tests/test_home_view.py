@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
 from typing import Any
 
+from app.core.config import AppConfig
 from app.models.pokemon import PokemonSummary
+from app.services.local_store import LocalStore
 from app.state.app_state import AppState
 from app.ui.views.home_view import HomeView
 
@@ -44,12 +48,13 @@ class FakeGenerationService:
     pass
 
 
-def _make_home() -> HomeView:
+def _make_home(store: LocalStore | None = None) -> HomeView:
     return HomeView(
         FakePage(),
         AppState(),
         FakePokemonService(),  # type: ignore[arg-type]
         FakeGenerationService(),  # type: ignore[arg-type]
+        local_store=store,
     )
 
 
@@ -66,7 +71,7 @@ def test_offline_summaries_return_cached_pokemon() -> None:
 def test_set_offline_builds_summary_list() -> None:
     home = _make_home()
     home.set_offline(True)
-    assert home._offline is True
+    assert home._view_mode == "offline"
     assert len(home._summaries) == 1
     assert home._summaries[0].id == 25
     list_view = home._list_container.content
@@ -81,3 +86,19 @@ def test_offline_summaries_include_entry_without_sprites() -> None:
     by_id = {summary.id: summary for summary in summaries}
     assert by_id[99].name == "missing-sprite"
     assert by_id[99].sprite_url is None
+
+
+def test_set_favorites_lists_stored_favorites() -> None:
+    store = LocalStore(config=AppConfig(data_dir=Path(tempfile.mkdtemp())))
+    store.add_favorite(25, "pikachu", "https://example.com/p.png")
+    home = _make_home(store=store)
+    home.set_favorites(True)
+    assert home._view_mode == "favorites"
+    assert len(home._summaries) == 1
+    assert home._summaries[0].id == 25
+
+
+def test_favorite_summaries_empty_when_no_favorites() -> None:
+    store = LocalStore(config=AppConfig(data_dir=Path(tempfile.mkdtemp())))
+    home = _make_home(store=store)
+    assert home._favorite_summaries() == []

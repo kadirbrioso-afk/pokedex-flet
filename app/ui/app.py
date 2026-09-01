@@ -10,6 +10,7 @@ import flet as ft
 from app import __version__
 from app.core.config import AppConfig
 from app.services.generation_service import GenerationService
+from app.services.local_store import LocalStore
 from app.services.pokeapi_client import PokeAPIClient
 from app.services.pokemon_service import PokemonService
 from app.state.app_state import AppState
@@ -21,9 +22,11 @@ def _build_app_bar(
     page: ft.Page,
     title: str,
     on_offline_toggle: Callable[[bool], Any] | None = None,
+    on_favorites_toggle: Callable[[bool], Any] | None = None,
 ) -> ft.AppBar:
     dark_mode = False
     offline = False
+    favorites = False
 
     def toggle_theme(_: Any) -> None:
         nonlocal dark_mode
@@ -37,12 +40,24 @@ def _build_app_bar(
         if on_offline_toggle:
             on_offline_toggle(offline)
 
+    def toggle_favorites(_: Any) -> None:
+        nonlocal favorites
+        favorites = not favorites
+        if on_favorites_toggle:
+            on_favorites_toggle(favorites)
+
     return ft.AppBar(
         title=ft.Text(title),
         center_title=True,
         bgcolor=ft.Colors.RED_700,
         color=ft.Colors.WHITE,
         actions=[
+            ft.IconButton(
+                icon=ft.Icons.FAVORITE,
+                icon_color=ft.Colors.AMBER,
+                tooltip="Ver favoritos",
+                on_click=toggle_favorites,
+            ),
             ft.IconButton(
                 icon=ft.Icons.CLOUD_OFF,
                 icon_color=ft.Colors.WHITE,
@@ -79,8 +94,14 @@ def start(page: ft.Page) -> None:
         AppState(),
         PokemonService(client),
         GenerationService(client),
+        LocalStore(),
     )
-    page.appbar = _build_app_bar(page, config.app_name, home.set_offline)
+    page.appbar = _build_app_bar(
+        page,
+        config.app_name,
+        home.set_offline,
+        home.set_favorites,
+    )
     page.add(home.build())
     page.run_task(home.load_initial)
     page.update()

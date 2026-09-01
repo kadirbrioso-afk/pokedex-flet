@@ -2,6 +2,18 @@
 
 Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fase 11 - Favoritos y persistencia local
+- Nuevo `LocalStore` (repositorio JSON atómico en
+  `~/.local/share/pokedex-flet/local.json`) que persiste favoritos, últimos
+  vistos e historial de búsqueda.
+- Botón de estrella en el detalle para (des)marcar favorito.
+- Botón «Favoritos» en la AppBar que lista los Pokémon marcados.
+- Registro de recientes (cada visita) e historial de búsqueda (cada búsqueda
+  exitosa).
+- `AppConfig.data_dir` añadido; modelos `FavoriteEntry`/`RecentEntry`.
+
 ## [0.1.0] - 2026-09-01
 
 Fases 0-9 completadas y Fase 10 (empaquetado y distribución).

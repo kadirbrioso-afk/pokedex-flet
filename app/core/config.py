@@ -24,3 +24,6 @@ class AppConfig:
     cache_dir: Path = field(
         default_factory=lambda: Path.home() / ".cache" / "pokedex-flet"
     )
+    data_dir: Path = field(
+        default_factory=lambda: Path.home() / ".local" / "share" / "pokedex-flet"
+    )

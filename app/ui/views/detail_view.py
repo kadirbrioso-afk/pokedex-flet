@@ -163,7 +163,12 @@ def _tabs_from_panels(panels: list[tuple[str, ft.Control]]) -> ft.Tabs:
     )
 
 
-def _info_panel(pokemon: PokemonDetail, species: PokemonSpecies | None) -> ft.Control:
+def _info_panel(
+    pokemon: PokemonDetail,
+    species: PokemonSpecies | None,
+    is_favorite: bool = False,
+    on_toggle_favorite: Callable[[], Any] | None = None,
+) -> ft.Control:
     images: dict[str, str] = {
         "normal": pokemon.sprites.get("front_default")
         or pokemon.sprites.get("home")
@@ -217,6 +222,13 @@ def _info_panel(pokemon: PokemonDetail, species: PokemonSpecies | None) -> ft.Co
     weight = f"{pokemon.weight / 10:.1f} kg" if pokemon.weight else "No disponible"
     description = species.description if species and species.description else None
 
+    favorite = ft.IconButton(
+        icon=ft.Icons.STAR if is_favorite else ft.Icons.STAR_BORDER,
+        icon_color=ft.Colors.AMBER if is_favorite else ft.Colors.GREY,
+        tooltip="Quitar de favoritos" if is_favorite else "Añadir a favoritos",
+        on_click=(lambda _: on_toggle_favorite()) if on_toggle_favorite else None,
+    )
+
     return ft.Column(
         [
             main_image,
@@ -226,10 +238,18 @@ def _info_panel(pokemon: PokemonDetail, species: PokemonSpecies | None) -> ft.Co
                 size=12,
                 color=ft.Colors.GREY,
             ),
-            ft.Text(
-                _display_name(pokemon, species),
-                size=24,
-                weight=ft.FontWeight.BOLD,
+            ft.Row(
+                [
+                    ft.Text(
+                        _display_name(pokemon, species),
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                        expand=True,
+                    ),
+                    favorite,
+                ],
+                spacing=8,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             _type_badges(pokemon),
             ft.Text(
@@ -599,9 +619,11 @@ def build_pokemon_detail(
     species: PokemonSpecies | None = None,
     chain: EvolutionChain | None = None,
     on_pokemon_clicked: Callable[[int, str], Any] | None = None,
+    is_favorite: bool = False,
+    on_toggle_favorite: Callable[[], Any] | None = None,
 ) -> ft.Container:
     panels: list[tuple[str, ft.Control]] = [
-        ("Info", _info_panel(pokemon, species)),
+        ("Info", _info_panel(pokemon, species, is_favorite, on_toggle_favorite)),
         ("Stats", _stats_panel(pokemon)),
         ("Evolución", _evolution_panel(chain, on_pokemon_clicked)),
         ("Movs", _moves_panel(pokemon)),

@@ -8,9 +8,12 @@ from typing import Any
 
 import flet as ft
 
+from app.models.evolution import EvolutionChain
 from app.models.generation import GenerationSummary
-from app.models.pokemon import PokemonSummary
+from app.models.pokemon import PokemonDetail, PokemonSummary
+from app.models.species import PokemonSpecies
 from app.services.generation_service import GenerationService
+from app.services.local_store import LocalStore
 from app.services.pokeapi_client import (
     NetworkError,
     PokeAPIError,
@@ -26,6 +29,10 @@ from app.ui.views.detail_view import build_empty_detail, build_pokemon_detail
 
 PAGE_SIZE = 50
 
+VIEW_GENERATION = "generation"
+VIEW_OFFLINE = "offline"
+VIEW_FAVORITES = "favorites"
+
 
 class HomeView:
     def __init__(
@@ -34,18 +41,20 @@ class HomeView:
         state: AppState,
         pokemon_service: PokemonService,
         generation_service: GenerationService,
+        local_store: LocalStore | None = None,
     ) -> None:
         self._page = page
         self._state = state
         self._pokemon_service = pokemon_service
         self._generation_service = generation_service
+        self._store = local_store or LocalStore()
         self._generations: list[GenerationSummary] = []
         self._summaries: list[PokemonSummary] = []
         self._selected_index = 0
         self._filter_text = ""
         self._sort_by = "id"
         self._offset = 0
-        self._offline = False
+        self._view_mode = VIEW_GENERATION
 
         self._header_text = ft.Text(size=18, weight=ft.FontWeight.BOLD)
         self._list_container = ft.Container(expand=True)
@@ -176,21 +185,39 @@ class HomeView:
         return self._generations[self._selected_index]
 
     def set_offline(self, offline: bool) -> None:
-        self._offline = offline
         self._offset = 0
         self._filter_field.value = ""
         self._filter_text = ""
         if offline:
+            self._view_mode = VIEW_OFFLINE
             self._header_text.value = "Modo offline — visitados"
             self._summaries = self._offline_summaries()
         else:
-            self._update_header(
-                self._generations[self._selected_index]
-                if self._generations
-                else self._generations[0]
-            )
+            self._restore_after_special_view()
         self._render_pokemon_list()
         self._page.update()
+
+    def set_favorites(self, on: bool) -> None:
+        self._offset = 0
+        self._filter_field.value = ""
+        self._filter_text = ""
+        if on:
+            self._view_mode = VIEW_FAVORITES
+            self._header_text.value = f"Favoritos ({len(self._store.list_favorites())})"
+            self._summaries = self._favorite_summaries()
+        else:
+            self._restore_after_special_view()
+        self._render_pokemon_list()
+        self._page.update()
+
+    def _restore_after_special_view(self) -> None:
+        self._view_mode = VIEW_GENERATION
+        if self._generations:
+            self._page.run_task(
+                self._load_generation_summaries, self._selected_index
+            )
+        else:
+            self._summaries = []
 
     def _offline_summaries(self) -> list[PokemonSummary]:
         summaries: list[PokemonSummary] = []
@@ -212,6 +239,16 @@ class HomeView:
                 )
             )
         return summaries
+
+    def _favorite_summaries(self) -> list[PokemonSummary]:
+        return [
+            PokemonSummary(
+                id=entry.id,
+                name=entry.name,
+                sprite_url=entry.sprite_url,
+            )
+            for entry in self._store.list_favorites()
+        ]
 
     def _update_header(self, generation: GenerationSummary) -> None:
         region = region_name(generation.id, generation.name.title())
@@ -386,13 +423,58 @@ class HomeView:
                 on_retry=self._make_detail_retry(pokemon_id, name),
             )
         else:
-            self._detail_container.content = build_pokemon_detail(
-                pokemon,
-                species,
-                chain,
-                on_pokemon_clicked=self._open_detail,
+            self._store.add_recent(
+                pokemon.id,
+                pokemon.name,
+                self._pokemon_sprite(pokemon),
+            )
+            self._detail_container.content = (
+                self._build_detail_content(pokemon, species, chain)
             )
         self._page.update()
+
+    def _pokemon_sprite(self, pokemon: PokemonDetail) -> str | None:
+        return pokemon.sprites.get("front_default") or None
+
+    def _build_detail_content(
+        self,
+        pokemon: PokemonDetail,
+        species: PokemonSpecies | None,
+        chain: EvolutionChain | None,
+    ) -> ft.Control:
+        return build_pokemon_detail(
+            pokemon,
+            species,
+            chain,
+            on_pokemon_clicked=self._open_detail,
+            is_favorite=self._store.is_favorite(pokemon.id),
+            on_toggle_favorite=self._make_toggle_favorite(pokemon, species, chain),
+        )
+
+    def _make_toggle_favorite(
+        self,
+        pokemon: PokemonDetail,
+        species: PokemonSpecies | None,
+        chain: EvolutionChain | None,
+    ) -> Callable[[], Any]:
+        def toggle() -> None:
+            self._store.toggle_favorite(
+                pokemon.id,
+                pokemon.name,
+                self._pokemon_sprite(pokemon),
+            )
+            if self._view_mode == VIEW_FAVORITES:
+                self._summaries = self._favorite_summaries()
+                self._header_text.value = (
+                    f"Favoritos ({len(self._store.list_favorites())})"
+                )
+                self._render_pokemon_list()
+            self._detail_container.content = (
+                self._build_detail_content(pokemon, species, chain)
+            )
+            self._page.update()
+
+        return toggle
 
     def _make_detail_retry(
         self,
@@ -464,6 +546,7 @@ class HomeView:
                 on_retry=self._make_retry(query),
             )
         else:
+            self._store.add_search(query)
             await self._open_detail(pokemon.id, pokemon.name)
         finally:
             self._set_search_loading(False)
