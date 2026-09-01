@@ -18,10 +18,20 @@ def test_parse_pikachu_detail(pikachu_json: dict) -> None:
     assert pokemon.name == "pikachu"
     assert pokemon.types[0].name == "electric"
     assert pokemon.types[0].slot == 1
-    assert {s.name for s in pokemon.stats} == {"hp", "attack"}
+    stats = {s.name: s.value for s in pokemon.stats}
+    assert stats == {
+        "hp": 35,
+        "attack": 55,
+        "defense": 40,
+        "special-attack": 50,
+        "special-defense": 50,
+        "speed": 90,
+    }
     assert pokemon.abilities[0].name == "static"
-    assert pokemon.sprites["front_default"] == "https://example.com/pikachu.png"
+    assert pokemon.abilities[1].is_hidden is True
+    assert pokemon.sprites["front_default"].startswith("https://")
     assert None not in pokemon.sprites.values()
+    assert len(pokemon.moves) > 0
 
 
 def test_parse_moves_and_artwork(pikachu_json: dict) -> None:
@@ -105,7 +115,8 @@ def test_parse_evolution_chain(evolution_chain_json: dict) -> None:
 
     middle: EvolutionNode = root.children[0]
     assert middle.pokemon_name == "pikachu"
-    assert middle.min_level == 2
+    assert middle.min_level is None
+    assert middle.min_happiness == 220
     assert middle.trigger == "level-up"
 
     leaf = middle.children[0]

@@ -66,6 +66,7 @@ def start(page: ft.Page) -> None:
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 8
     page.spacing = 8
+    page.window.icon = "icons/logo.ico"
 
     client = PokeAPIClient()
 

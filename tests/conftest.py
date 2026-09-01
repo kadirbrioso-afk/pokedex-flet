@@ -1,95 +1,45 @@
-"""Fixtures compartidos para los tests."""
+"""Fixtures compartidos para los tests.
+
+Carga datos reales de PokeAPI desde ``tests/fixtures/`` (descargados por
+``scripts/download_fixtures.py``) para pruebas deterministas sin red.
+"""
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
+
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+
+
+def load_fixture(filename: str) -> dict:
+    """Carga un archivo de fixture JSON y lo devuelve como dict."""
+    path = FIXTURES_DIR / filename
+    if not path.is_file():
+        pytest.fail(
+            f"No existe el fixture {path}. Ejecuta "
+            f"`uv run python scripts/download_fixtures.py`."
+        )
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 @pytest.fixture
 def pikachu_json() -> dict:
-    return {
-        "id": 25,
-        "name": "pikachu",
-        "height": 4,
-        "weight": 60,
-        "base_experience": 112,
-        "sprites": {
-            "front_default": "https://example.com/pikachu.png",
-            "back_default": None,
-        },
-        "types": [
-            {"slot": 1, "type": {"name": "electric"}},
-        ],
-        "stats": [
-            {"base_stat": 35, "stat": {"name": "hp"}},
-            {"base_stat": 55, "stat": {"name": "attack"}},
-        ],
-        "abilities": [
-            {"slot": 1, "is_hidden": False, "ability": {"name": "static"}},
-        ],
-    }
+    return load_fixture("pokemon_25.json")
 
 
 @pytest.fixture
 def species_json() -> dict:
-    return {
-        "id": 25,
-        "name": "pikachu",
-        "names": [
-            {"language": {"name": "en"}, "name": "Pikachu"},
-            {"language": {"name": "es"}, "name": "Pikachu"},
-        ],
-        "flavor_text_entries": [
-            {
-                "language": {"name": "es"},
-                "flavor_text": "Cuando se enfada\fdescarga\nenergía.",
-            }
-        ],
-        "habitat": {"name": "forest"},
-        "color": {"name": "yellow"},
-        "shape": {"name": "quadruped"},
-        "capture_rate": 190,
-        "base_happiness": 50,
-        "generation": {"url": "https://pokeapi.co/api/v2/generation/1/"},
-        "evolution_chain": {"url": "https://pokeapi.co/api/v2/evolution-chain/10/"},
-    }
+    return load_fixture("pokemon-species_25.json")
 
 
 @pytest.fixture
 def evolution_chain_json() -> dict:
-    return {
-        "id": 10,
-        "chain": {
-            "species": {
-                "name": "pichu",
-                "url": "https://pokeapi.co/api/v2/pokemon-species/172/",
-            },
-            "evolution_details": [],
-            "evolves_to": [
-                {
-                    "species": {
-                        "name": "pikachu",
-                        "url": "https://pokeapi.co/api/v2/pokemon-species/25/",
-                    },
-                    "evolution_details": [
-                        {"trigger": {"name": "level-up"}, "min_level": 2}
-                    ],
-                    "evolves_to": [
-                        {
-                            "species": {
-                                "name": "raichu",
-                                "url": "https://pokeapi.co/api/v2/pokemon-species/26/",
-                            },
-                            "evolution_details": [
-                                {
-                                    "trigger": {"name": "use-item"},
-                                    "item": {"name": "thunder-stone"},
-                                }
-                            ],
-                            "evolves_to": [],
-                        }
-                    ],
-                }
-            ],
-        },
-    }
+    return load_fixture("evolution-chain_10.json")
+
+
+@pytest.fixture
+def generation_json() -> dict:
+    return load_fixture("generation_1.json")

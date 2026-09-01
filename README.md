@@ -1,8 +1,10 @@
 # Pokédex Flet
 
+![Logo de la Pokédex](assets/icons/logo.png)
+
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-8 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-9 completadas.
 
 ## Requisitos
 
@@ -40,9 +42,27 @@ El cliente implementa reintentos (429/5xx y errores de red), concurrencia limita
 ## Calidad
 
 ```bash
-uv run ruff check .
-uv run mypy app
-uv run pytest
+uv run ruff check .      # lint
+uv run mypy app          # type check
+uv run pytest            # tests + cobertura (mín. 70 % en services/models)
+```
+
+`pytest` ejecuta `pytest-cov` con umbral de cobertura mínimo del **70 %** sobre
+`app/services` y `app/models` (activo también en CI).
+
+### Integración continua
+
+Existe un pipeline de CI en `.github/workflows/ci.yml` (GitHub Actions) que
+corre `ruff check`, `mypy` y `pytest` con cobertura en cada push a `main` y en
+cada pull request.
+
+### Fixtures
+
+Los tests usan fixtures reales de PokeAPI almacenadas en `tests/fixtures/`
+para ser deterministas y no depender de la red. Para regenerarlas:
+
+```bash
+uv run python scripts/download_fixtures.py
 ```
 
 ## Estructura
@@ -123,6 +143,16 @@ assets/                  # Iconos e imágenes
   - Reto extra: modo offline con el botón de la AppBar (`cloud_off`) que lista
     solo Pokémon ya visitados (los cacheados en disco), mostrando nombre y
     sprite desde la caché sin red.
+- [x] Fase 9: Testing, calidad y robustez.
+  - Fixtures reales de PokeAPI en `tests/fixtures/` (`pokemon_25.json`,
+    `pokemon-species_25.json`, `evolution-chain_10.json`, `generation_1.json`),
+    regenerables con `scripts/download_fixtures.py`.
+  - `conftest.py` carga los fixtures desde archivo (pruebas deterministas sin red).
+  - Tests de parseadores, cliente HTTP (respx: 404, timeout, JSON inválido,
+    reintentos), servicios (búsqueda, generación, evolución) y constructores UI.
+  - Reto extra: cobertura con `pytest-cov` (umbral mínimo 70 %) sobre
+    `app/services` y `app/models`.
+  - Pipeline CI en GitHub Actions (`ruff`, `mypy`, `pytest`).
 
 ## Estado
 

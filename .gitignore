@@ -28,6 +28,5 @@ flet_builds/
 .idea/
 .vscode/
 
-# Artefactos de fixtures descargados
-tests/fixtures/
-!tests/fixtures/.gitkeep
+# Fixtures de tests reales se mantienen en control de versiones
+# (tests/fixtures/*.json se trackean para CI determinista; ver scripts/download_fixtures.py)
