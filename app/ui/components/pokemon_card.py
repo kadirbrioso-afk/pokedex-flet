@@ -11,6 +11,22 @@ from app.models.pokemon import PokemonSummary
 from app.ui.theme import border
 
 
+def _on_hover(event: ft.Event[ft.Container]) -> None:
+    card = event.control
+    hovered = event.data == "true"
+    card.scale = 1.03 if hovered else 1.0
+    card.shadow = (
+        ft.BoxShadow(
+            blur_radius=10,
+            color=ft.Colors.BLACK38,
+            offset=ft.Offset(0, 3),
+        )
+        if hovered
+        else None
+    )
+    card.update()
+
+
 def build_pokemon_card(
     summary: PokemonSummary,
     on_click: Callable[[Any], Any] | None = None,
@@ -59,5 +75,9 @@ def build_pokemon_card(
         ),
         border_radius=10,
         padding=8,
+        scale=1.0,
+        shadow=None,
+        animate_scale=ft.Animation(150, ft.AnimationCurve.EASE_OUT),
+        on_hover=_on_hover,
         on_click=on_click,
     )

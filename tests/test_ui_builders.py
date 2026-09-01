@@ -16,8 +16,14 @@ from app.services.parsers import (
 from app.ui.components.error_message import build_error
 from app.ui.components.loading_indicator import build_loading
 from app.ui.components.pokemon_card import build_pokemon_card
+from app.ui.components.skeleton import (
+    build_skeleton_card,
+    build_skeleton_detail,
+    build_skeleton_list,
+)
 from app.ui.components.stat_bar import build_stat_bar
 from app.ui.mock_data import mock_pokemon
+from app.ui.theme import FONT_FAMILY, build_theme, card_border
 from app.ui.views.detail_view import (
     _display_name,
     build_detail,
@@ -49,6 +55,40 @@ def test_build_pokemon_card_without_sprite() -> None:
     summary = PokemonSummary(id=10001, name="forms")
     control = build_pokemon_card(summary, on_click=None, selected=False)
     assert isinstance(control, ft.Container)
+
+
+def test_pokemon_card_has_hover_animation() -> None:
+    summary = mock_pokemon(1)[0]
+    control = build_pokemon_card(summary, on_click=None, selected=False)
+    assert isinstance(control.scale, float)
+    assert control.on_hover is not None
+    assert control.animate_scale is not None
+
+
+def test_build_skeleton_card_and_list() -> None:
+    card = build_skeleton_card()
+    assert isinstance(card, ft.Container)
+    listing = build_skeleton_list(count=6)
+    assert isinstance(listing, ft.Column)
+    assert len(listing.controls) == 6
+
+
+def test_build_skeleton_detail() -> None:
+    detail = build_skeleton_detail()
+    assert isinstance(detail, ft.Container)
+
+
+def test_build_theme_sets_typography() -> None:
+    theme = build_theme()
+    assert theme.font_family == FONT_FAMILY
+    assert theme.card_theme is not None
+    assert theme.appbar_theme is not None
+
+
+def test_card_border_variants() -> None:
+    assert card_border().top.color == ft.Colors.OUTLINE_VARIANT
+    assert card_border(selected=True).top.color == ft.Colors.PRIMARY
+    assert card_border(on_surface=True).top.color == ft.Colors.OUTLINE
 
 
 def test_build_loading_and_error() -> None:

@@ -28,6 +28,7 @@ from app.state.app_state import AppState
 from app.ui.components.error_message import build_error
 from app.ui.components.loading_indicator import build_loading
 from app.ui.components.pokemon_card import build_pokemon_card
+from app.ui.components.skeleton import build_skeleton_detail, build_skeleton_list
 from app.ui.regions import region_name
 from app.ui.views.compare_view import CompareView
 from app.ui.views.detail_view import build_empty_detail, build_pokemon_detail
@@ -209,8 +210,8 @@ class HomeView:
 
     def build(self) -> ft.Stack:
         self._header_text.value = t("home.pokedex")
-        self._list_container.content = build_loading(t("home.loading_generations"))
-        self._detail_container.content = build_empty_detail()
+        self._list_container.content = build_skeleton_list()
+        self._detail_container.content = build_skeleton_detail()
         self._home_row = ft.Row(
             [
                 self._rail,
@@ -450,14 +451,7 @@ class HomeView:
         self._summaries = []
         self._offset = 0
         self._update_header(generation)
-        self._list_container.content = ft.Column(
-            [
-                ft.ProgressBar(),
-                build_loading(t("home.loading_generation", id=generation.id)),
-            ],
-            spacing=8,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        )
+        self._list_container.content = build_skeleton_list()
         self._detail_container.content = build_empty_detail()
         self._page.update()
         try:
@@ -538,7 +532,7 @@ class HomeView:
 
     async def _open_detail(self, pokemon_id: int, name: str) -> None:
         self._state.selected_pokemon_id = pokemon_id
-        self._detail_container.content = build_loading(t("home.loading_detail"))
+        self._detail_container.content = build_skeleton_detail()
         self._render_pokemon_list()
         self._page.update()
         try:

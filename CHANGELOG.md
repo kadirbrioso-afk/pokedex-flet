@@ -4,6 +4,23 @@ Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog
 
 ## [Unreleased]
 
+### Fase 15 - Tema visual profesional
+- **Tipografía consistente**: fuente unificada en todo el tema
+  (`Theme.font_family`), `CardTheme` (esquinas redondeadas y elevación) y
+  `AppBarTheme` aplicados a nivel de tema.
+- **Modo oscuro**: la app arranca en el tema del sistema
+  (`ThemeMode.SYSTEM`) y el botón de la AppBar sigue alternando claro/oscuro.
+- **Colores por tipo**: `TYPE_COLORS` (18 tipos) ya usados en badges,
+  comparador y tabla de tipos (funcionalidad existente integrada en el tema).
+- **Skeleton loaders**: nuevo `app/ui/components/skeleton.py` con tarjetas,
+  lista y detalle «esqueleto» que se muestran mientras cargan las
+  generaciones y el detalle de un Pokémon.
+- **Animaciones sutiles**: las tarjetas de la lista tienen elevarse/scale y
+  sombra al pasar el cursor (transición de 150 ms).
+- **Iconos consistentes**: icono común (CATCHING_POKEMON) para sprites
+  ausentes en listas, detalle y evoluciones.
+- **Versión 0.2.0**: primera release menor (última fase del roadmap).
+
 ### Fase 14 - Internacionalización (ES/EN)
 - Nuevo módulo `app/i18n`: catálogo bilingüe con más de 150 claves, clase
   `Translator` (idioma activo), funciones `t()`/`set_language()` y fallbacks a

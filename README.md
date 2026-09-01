@@ -4,7 +4,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-14 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-15 completadas.
 
 ## Requisitos
 
@@ -219,7 +219,14 @@ assets/                  # Iconos e imágenes
     tipos se muestran localizadas.
   - El comparador usa el idioma activo para los nombres (lang propagado por
     `CompareService.compare`).
+- [x] Fase 15: Tema visual profesional.
+  - Tipografía, `CardTheme` y `AppBarTheme` consistentes; la app arranca en el
+    tema del sistema (botón de modo oscuro en la AppBar).
+  - Skeleton loaders para lista y detalle (`app/ui/components/skeleton.py`).
+  - Animación sutil de hover en las tarjetas de la lista (escala + sombra).
+  - Colores por tipo de Pokémon en badges, comparador y tabla de tipos.
+  - **Versión 0.2.0** (última fase del roadmap).
 
 ## Estado
 
-Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON. Comparador de dos Pokémon (stats con barras, tipos, habilidades y evoluciones) accesible desde la AppBar. Tabla de tipos (debilidades, resistencias, inmunidades y daño normal combinando uno o dos tipos) accesible desde la AppBar. La interfaz está completamente internacionalizada (ES/EN) con selector de idioma en la AppBar: nombres y descripciones de especie se muestran en el idioma activo con fallbacks.
+Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON. Comparador de dos Pokémon (stats con barras, tipos, habilidades y evoluciones) accesible desde la AppBar. Tabla de tipos (debilidades, resistencias, inmunidades y daño normal combinando uno o dos tipos) accesible desde la AppBar. La interfaz está completamente internacionalizada (ES/EN) con selector de idioma en la AppBar: nombres y descripciones de especie se muestran en el idioma activo con fallbacks. Tema visual profesional v0.2.0: tipografía consistente, modo oscuro (sigue al sistema), skeleton loaders mientras cargan listas y detalle, hover animado en tarjetas y colores por tipo en badges, comparador y tabla de tipos.

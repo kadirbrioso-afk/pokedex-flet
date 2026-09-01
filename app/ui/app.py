@@ -124,7 +124,7 @@ def start(page: ft.Page) -> None:
     config = AppConfig()
     page.title = f"{config.app_name} v{__version__}"
     page.theme = build_theme()
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme_mode = ft.ThemeMode.SYSTEM
     page.padding = 8
     page.spacing = 8
     page.window.icon = "icons/logo.ico"

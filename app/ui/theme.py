@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import flet as ft
 
+FONT_FAMILY = "DejaVu Sans"
+
 TYPE_COLORS: dict[str, str] = {
     "normal": "#A8A77A",
     "fire": "#EE8130",
@@ -35,5 +37,31 @@ def border(width: int, color: str) -> ft.Border:
     return ft.Border(top=side, right=side, bottom=side, left=side)
 
 
+def card_border(
+    selected: bool = False,
+    on_surface: bool = False,
+) -> ft.Border:
+    color = (
+        ft.Colors.PRIMARY
+        if selected
+        else (ft.Colors.OUTLINE if on_surface else ft.Colors.OUTLINE_VARIANT)
+    )
+    return border(1, color)
+
+
 def build_theme() -> ft.Theme:
-    return ft.Theme(color_scheme_seed=ft.Colors.RED)
+    return ft.Theme(
+        color_scheme_seed=ft.Colors.RED,
+        font_family=FONT_FAMILY,
+        card_theme=ft.CardTheme(
+            elevation=2,
+            shape=ft.RoundedRectangleBorder(radius=12),
+            clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+        ),
+        appbar_theme=ft.AppBarTheme(
+            bgcolor=ft.Colors.RED,
+            color=ft.Colors.WHITE,
+            center_title=True,
+            elevation=2,
+        ),
+    )
