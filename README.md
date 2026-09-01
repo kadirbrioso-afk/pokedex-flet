@@ -65,6 +65,33 @@ para ser deterministas y no depender de la red. Para regenerarlas:
 uv run python scripts/download_fixtures.py
 ```
 
+## Build y distribución (Fase 10)
+
+La aplicación se empaqueta como ejecutable de escritorio con `flet build`.
+Los metadatos de build (`product`, `org`, `company`, `description`) y las
+exclusiones de empaquetado están configurados en `[tool.flet]` de
+`pyproject.toml`; la versión se toma de `[project].version`.
+
+> **Nota:** `flet build` requiere [Flutter](https://flutter.dev), que se
+> descarga automáticamente en el primer build (necesario en máquinas con
+> toolchains de compilación, p. ej. `cmake`, `clang`, `libgtk-3-dev`).
+
+```bash
+# Ejecutable Linux (también: windows, macos, web, apk, aab, ipa…)
+uv run flet build linux -o dist
+```
+
+El ejecutable se genera en `dist/`. El workflow
+`.github/workflows/release.yml` (GitHub Actions) compila el ejecutable Linux
+en `ubuntu-latest` (que sí trae los toolchains), sube el artefacto y se lanza
+al publicar una tag `v*` o manualmente desde la pestaña *Actions*.
+
+### Distribución a usuarios
+
+Para usuarios finales basta distribuir el ejecutable/directorio generado en
+`dist/` (Linux: `dist/pokedex-flet`); no requiere Python ni dependencias
+instaladas porque van empaquetadas dentro del binario.
+
 ## Estructura
 
 ```text

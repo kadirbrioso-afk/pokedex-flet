@@ -17,6 +17,15 @@ dependencies = [
 [project.scripts]
 pokedex = "app.cli:main"
 
+[tool.flet]
+product = "Pokédex"
+org = "com.kadirbrioso"
+company = "kadirbrioso"
+description = "Pokédex interactiva en Python + Flet + PokeAPI"
+
+[tool.flet.app]
+exclude = ["tests", "scripts", ".github", ".venv", "build", "docs"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
 
