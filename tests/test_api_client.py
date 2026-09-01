@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
+
 import httpx
 import pytest
 import respx
@@ -17,16 +20,86 @@ from app.services.pokeapi_client import (
 API = "https://pokeapi.co/api/v2"
 
 
-def make_config(max_retries: int = 2) -> AppConfig:
+def make_config(
+    max_retries: int = 2,
+    cache_dir: Path | None = None,
+    cache_ttl_seconds: int | None = 86400,
+) -> AppConfig:
     return AppConfig(
         pokeapi_base_url=API,
         max_retries=max_retries,
         retry_backoff=0.0,
+        cache_dir=cache_dir or Path(tempfile.mkdtemp(prefix="pokedex-test-")),
+        cache_ttl_seconds=cache_ttl_seconds,
     )
 
 
 def pokemon_payload() -> dict:
     return {"id": 25, "name": "pikachu", "types": [], "stats": [], "abilities": []}
+
+
+@respx.mock
+async def test_disk_cache_persists_between_client_instances(
+    tmp_path: Path,
+) -> None:
+    route = respx.get(f"{API}/pokemon/25").mock(
+        return_value=httpx.Response(200, json=pokemon_payload())
+    )
+    config = make_config(cache_dir=tmp_path)
+    first = PokeAPIClient(config=config)
+    await first.get_pokemon(25)
+    await first.close()
+
+    second = PokeAPIClient(config=config)
+    data = await second.get_pokemon(25)
+    await second.close()
+
+    assert data["id"] == 25
+    assert route.call_count == 1
+    cache_file = tmp_path / "api" / "pokemon" / "25.json"
+    assert cache_file.is_file()
+
+
+@respx.mock
+async def test_disk_cache_returns_cached_without_network(tmp_path: Path) -> None:
+    config = make_config(cache_dir=tmp_path)
+    import json
+
+    cache_file = tmp_path / "api" / "pokemon" / "25.json"
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
+    cache_file.write_text(
+        json.dumps({"expires_at": 10**12, "data": pokemon_payload()}),
+        encoding="utf-8",
+    )
+
+    client = PokeAPIClient(config=config)
+    data = await client.get_pokemon(25)
+    await client.close()
+
+    assert data["id"] == 25
+
+
+@respx.mock
+async def test_cached_pokemon_listing(tmp_path: Path) -> None:
+    respx.get(f"{API}/pokemon/25").mock(
+        return_value=httpx.Response(200, json=pokemon_payload())
+    )
+    respx.get(f"{API}/pokemon/6").mock(
+        return_value=httpx.Response(
+            200,
+            json={**pokemon_payload(), "id": 6, "name": "charizard"},
+        )
+    )
+    config = make_config(cache_dir=tmp_path)
+    client = PokeAPIClient(config=config)
+    await client.get_pokemon(25)
+    await client.get_pokemon(6)
+    await client.close()
+
+    assert client.list_cached_pokemon_ids() == [6, 25]
+    cached = client.get_cached_pokemon(6)
+    assert cached is not None
+    assert cached["name"] == "charizard"
 
 
 @respx.mock

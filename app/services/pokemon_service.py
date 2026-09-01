@@ -96,3 +96,9 @@ class PokemonService:
         chain = evolution_chain_from_json(data)
         self._cache.set(cache_key, chain)
         return chain
+
+    def cached_pokemon_ids(self) -> list[int]:
+        return self._client.list_cached_pokemon_ids()
+
+    def get_cached_pokemon(self, identifier: int) -> dict[str, Any] | None:
+        return self._client.get_cached_pokemon(identifier)

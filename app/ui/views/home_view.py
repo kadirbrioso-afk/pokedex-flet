@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from typing import Any
 
@@ -44,6 +45,7 @@ class HomeView:
         self._filter_text = ""
         self._sort_by = "id"
         self._offset = 0
+        self._offline = False
 
         self._header_text = ft.Text(size=18, weight=ft.FontWeight.BOLD)
         self._list_container = ft.Container(expand=True)
@@ -91,12 +93,14 @@ class HomeView:
             expand=True,
             dense=True,
             on_submit=self._on_search,
+            on_change=self._on_search_change,
         )
         self._search_button = ft.FilledButton(
             "Buscar",
             icon=ft.Icons.SEARCH,
             on_click=self._on_search,
         )
+        self._search_generation = 0
         self._rail = ft.NavigationRail(
             selected_index=0,
             label_type=ft.NavigationRailLabelType.ALL,
@@ -171,6 +175,44 @@ class HomeView:
             return None
         return self._generations[self._selected_index]
 
+    def set_offline(self, offline: bool) -> None:
+        self._offline = offline
+        self._offset = 0
+        self._filter_field.value = ""
+        self._filter_text = ""
+        if offline:
+            self._header_text.value = "Modo offline — visitados"
+            self._summaries = self._offline_summaries()
+        else:
+            self._update_header(
+                self._generations[self._selected_index]
+                if self._generations
+                else self._generations[0]
+            )
+        self._render_pokemon_list()
+        self._page.update()
+
+    def _offline_summaries(self) -> list[PokemonSummary]:
+        summaries: list[PokemonSummary] = []
+        for pokemon_id in self._pokemon_service.cached_pokemon_ids():
+            data = self._pokemon_service.get_cached_pokemon(pokemon_id)
+            if data is None:
+                continue
+            name = data.get("name", f"pokemon-{pokemon_id}")
+            sprite = (
+                data.get("sprites", {}).get("front_default")
+                if isinstance(data.get("sprites"), dict)
+                else None
+            )
+            summaries.append(
+                PokemonSummary(
+                    id=pokemon_id,
+                    name=name,
+                    sprite_url=sprite if isinstance(sprite, str) else None,
+                )
+            )
+        return summaries
+
     def _update_header(self, generation: GenerationSummary) -> None:
         region = region_name(generation.id, generation.name.title())
         self._header_text.value = f"Generación {generation.id} — {region}"
@@ -242,8 +284,13 @@ class HomeView:
         self._summaries = []
         self._offset = 0
         self._update_header(generation)
-        self._list_container.content = build_loading(
-            f"Cargando generación {generation.id}…"
+        self._list_container.content = ft.Column(
+            [
+                ft.ProgressBar(),
+                build_loading(f"Cargando generación {generation.id}…"),
+            ],
+            spacing=8,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
         self._detail_container.content = build_empty_detail()
         self._page.update()
@@ -380,6 +427,25 @@ class HomeView:
             )
             self._page.update()
             return
+        self._search_generation += 1
+        await self._run_search(query)
+
+    def _on_search_change(self, event: Any) -> None:
+        query = self._current_query()
+        if not query:
+            self._search_generation += 1
+            return
+        generation = self._search_generation + 1
+        self._search_generation = generation
+        self._page.run_task(self._debounced_search, generation, query)
+
+    async def _debounced_search(self, generation: int, query: str) -> None:
+        await asyncio.sleep(0.3)
+        if generation != self._search_generation:
+            return
+        await self._run_search(query)
+
+    async def _run_search(self, query: str) -> None:
         self._state.last_search = query
         self._set_search_loading(True)
         self._detail_container.content = build_loading("Buscando…")

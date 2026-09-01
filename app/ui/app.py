@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import flet as ft
@@ -16,8 +17,13 @@ from app.ui.theme import build_theme
 from app.ui.views.home_view import HomeView
 
 
-def _build_app_bar(page: ft.Page, title: str) -> ft.AppBar:
+def _build_app_bar(
+    page: ft.Page,
+    title: str,
+    on_offline_toggle: Callable[[bool], Any] | None = None,
+) -> ft.AppBar:
     dark_mode = False
+    offline = False
 
     def toggle_theme(_: Any) -> None:
         nonlocal dark_mode
@@ -25,12 +31,24 @@ def _build_app_bar(page: ft.Page, title: str) -> ft.AppBar:
         page.theme_mode = ft.ThemeMode.DARK if dark_mode else ft.ThemeMode.LIGHT
         page.update()
 
+    def toggle_offline(_: Any) -> None:
+        nonlocal offline
+        offline = not offline
+        if on_offline_toggle:
+            on_offline_toggle(offline)
+
     return ft.AppBar(
         title=ft.Text(title),
         center_title=True,
         bgcolor=ft.Colors.RED_700,
         color=ft.Colors.WHITE,
         actions=[
+            ft.IconButton(
+                icon=ft.Icons.CLOUD_OFF,
+                icon_color=ft.Colors.WHITE,
+                tooltip="Modo offline (visitados)",
+                on_click=toggle_offline,
+            ),
             ft.IconButton(
                 icon=ft.Icons.DARK_MODE,
                 icon_color=ft.Colors.WHITE,
@@ -49,8 +67,6 @@ def start(page: ft.Page) -> None:
     page.padding = 8
     page.spacing = 8
 
-    page.appbar = _build_app_bar(page, config.app_name)
-
     client = PokeAPIClient()
 
     async def on_disconnect(_: Any) -> None:
@@ -63,6 +79,7 @@ def start(page: ft.Page) -> None:
         PokemonService(client),
         GenerationService(client),
     )
+    page.appbar = _build_app_bar(page, config.app_name, home.set_offline)
     page.add(home.build())
     page.run_task(home.load_initial)
     page.update()

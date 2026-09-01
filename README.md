@@ -2,7 +2,7 @@
 
 Pokédex interactiva de escritorio (y web, opcionalmente) construida con **Python + Flet**, consumiendo **PokeAPI**.
 
-Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-7 completadas.
+Proyecto basado en el [roadmap](Roadmap_Pokedex_Flet.md) `Roadmap_Pokedex_Flet.md`. Fases 0-8 completadas.
 
 ## Requisitos
 
@@ -112,7 +112,18 @@ assets/                  # Iconos e imágenes
     intercambio, amistad, hora, género, movimiento, ubicación, lluvia).
   - Reto extra: tooltip con las condiciones completas al pasar el ratón
     por la flecha evolutiva.
+- [x] Fase 8: Rendimiento, caché y experiencia de usuario.
+  - Caché en disco de respuestas JSON con TTL en `~/.cache/pokedex-flet/api/`
+    (`pokemon/…`, `pokemon-species/…`, `evolution-chain/…`, `generation`)
+    en `PokeAPIClient._get`; la 2.ª apertura de un Pokémon no vuelve a la red.
+  - Debounce de 300 ms en el buscador al escribir (cancela búsquedas previas
+    con contador de generación).
+  - Indicador de progreso (barra `ProgressBar`) al cargar listas grandes de
+    generación.
+  - Reto extra: modo offline con el botón de la AppBar (`cloud_off`) que lista
+    solo Pokémon ya visitados (los cacheados en disco), mostrando nombre y
+    sprite desde la caché sin red.
 
 ## Estado
 
-Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y datos en español. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local, búsqueda global y detalle real al hacer click.
+Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click.

@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import time
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -75,6 +78,20 @@ class PokeAPIClient:
         path: str,
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        cache_key = self._cache_key(path, params)
+        cached = self._disk_cache_get(cache_key)
+        if cached is not None:
+            logger.debug("Caché disco %s", path)
+            return cached
+        data = await self._fetch(path, params)
+        self._disk_cache_set(cache_key, data)
+        return data
+
+    async def _fetch(
+        self,
+        path: str,
+        params: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         for attempt in range(self._config.max_retries + 1):
             try:
                 async with self._semaphore:
@@ -137,3 +154,71 @@ class PokeAPIClient:
             return response.json()
         except ValueError as exc:
             raise PokeAPIError(f"Respuesta no válida para {path}") from exc
+
+    def _cache_dir(self) -> Path:
+        return self._config.cache_dir / "api"
+
+    def list_cached_pokemon_ids(self) -> list[int]:
+        """IDs de detalles de Pokémon cacheados en disco (para modo offline)."""
+        pokemon_dir = self._cache_dir() / "pokemon"
+        ids: list[int] = []
+        try:
+            for path in pokemon_dir.glob("*.json"):
+                stem = path.stem
+                if stem.isdigit():
+                    ids.append(int(stem))
+        except OSError:
+            return []
+        return sorted(ids)
+
+    def get_cached_pokemon(self, identifier: int) -> dict[str, Any] | None:
+        """Devuelve el JSON cacheado en disco de un detalle de Pokémon, o None."""
+        key = f"/pokemon/{identifier}"
+        return self._disk_cache_get(key)
+
+    def _cache_key(self, path: str, params: dict[str, Any] | None) -> str:
+        from urllib.parse import urlparse
+
+        query = urlparse(path).query
+        if params:
+            pairs = sorted(
+                f"{key}={value}" for key, value in params.items()
+            )
+            query = (query + "&" + "&".join(pairs)).strip("&")
+        return f"{path}?{query}" if query else path
+
+    def _disk_cache_get(self, key: str) -> dict[str, Any] | None:
+        ttl = self._config.cache_ttl_seconds
+        if ttl is None:
+            return None
+        cache_file = self._cache_dir() / f"{key.lstrip('/')}.json"
+        try:
+            if not cache_file.is_file():
+                return None
+            payload = cache_file.read_text(encoding="utf-8")
+            envelope = json.loads(payload)
+            expires_at = envelope.get("expires_at", 0.0)
+            if time.time() > expires_at:
+                cache_file.unlink()
+                return None
+            return envelope.get("data")
+        except (OSError, ValueError) as exc:
+            logger.debug("No se pudo leer caché disco %s: %s", key, exc)
+            return None
+
+    def _disk_cache_set(self, key: str, data: dict[str, Any]) -> None:
+        ttl = self._config.cache_ttl_seconds
+        if ttl is None:
+            return
+        cache_file = self._cache_dir() / f"{key.lstrip('/')}.json"
+        try:
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            envelope = {
+                "expires_at": time.time() + ttl,
+                "data": data,
+            }
+            cache_file.write_text(
+                json.dumps(envelope), encoding="utf-8"
+            )
+        except OSError as exc:
+            logger.debug("No se pudo escribir caché disco %s: %s", key, exc)
