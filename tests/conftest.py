@@ -43,3 +43,13 @@ def evolution_chain_json() -> dict:
 @pytest.fixture
 def generation_json() -> dict:
     return load_fixture("generation_1.json")
+
+
+@pytest.fixture
+def type_fire_json() -> dict:
+    return load_fixture("type_10.json")
+
+
+@pytest.fixture
+def type_water_json() -> dict:
+    return load_fixture("type_11.json")

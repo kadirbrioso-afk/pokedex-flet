@@ -64,6 +64,9 @@ class PokeAPIClient:
     async def get_evolution_chain(self, chain_id: int) -> dict[str, Any]:
         return await self._get(f"/evolution-chain/{chain_id}")
 
+    async def get_type(self, identifier: str | int) -> dict[str, Any]:
+        return await self._get(f"/type/{identifier}")
+
     async def close(self) -> None:
         await self._client.aclose()
 

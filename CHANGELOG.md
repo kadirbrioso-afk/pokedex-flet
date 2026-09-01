@@ -32,6 +32,17 @@ Todas las fases del proyecto `pokedex-flet`. Formato basado en [Keep a Changelog
   Pokémon (con aviso «Selecciona Pokémon A/B»), y al hacer clic en uno se asigna
   al lado correspondiente y se muestra la comparación.
 
+### Fase 13 - Tabla de tipos
+- Nuevo `TypeService` y modelo `TypeChartResult` que combinan uno o dos tipos
+  defensivos y calculan las debilidades (x2/x4), resistencias (x0.5/x0.25),
+  inmunidades (x0) y daño normal (x1) contra los 18 tipos de ataque del juego
+  (endpoint `/type/{type}`).
+- Vista «Tabla de tipos» accesible desde la AppBar (botón GRID_ON): selector de
+  uno o dos tipos y tabla visual con badges de color según la relación de daño
+  recibido, con leyenda y multiplicadores.
+- Fixtures reales de tipos (`type_10/11/3/8.json`) añadidos al descargador y
+  cobertura del servicio y la lógica de combinación.
+
 ## [0.1.0] - 2026-09-01
 
 Fases 0-9 completadas y Fase 10 (empaquetado y distribución).

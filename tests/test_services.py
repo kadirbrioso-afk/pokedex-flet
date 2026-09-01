@@ -15,9 +15,11 @@ class FakePokeAPIClient:
         pokemon: dict[str, Any] | None = None,
         species: dict[str, Any] | None = None,
         generation: dict[str, Any] | None = None,
+        types: dict[str, Any] | None = None,
     ) -> None:
         self._pokemon = pokemon or {}
         self._species = species or {}
+        self._types = types or {}
         self._generation = generation or {
             "id": 1,
             "name": "generation-i",
@@ -32,6 +34,7 @@ class FakePokeAPIClient:
         self.species_calls = 0
         self.generation_calls = 0
         self.evolution_calls = 0
+        self.type_calls = 0
 
     async def get_pokemon(self, identifier: str | int) -> dict[str, Any]:
         self.pokemon_calls += 1
@@ -63,6 +66,11 @@ class FakePokeAPIClient:
                 "evolves_to": [],
             },
         }
+
+    async def get_type(self, identifier: str | int) -> dict[str, Any]:
+        self.type_calls += 1
+        await asyncio.sleep(0)
+        return self._types.get(str(identifier), self._types)
 
     async def close(self) -> None:
         return None

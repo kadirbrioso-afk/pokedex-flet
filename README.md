@@ -201,7 +201,14 @@ assets/                  # Iconos e imágenes
     lista para escoger cada uno.
   - Compara stats (barras lado a lado, ganador en verde, total), tipos,
     habilidades y cadenas evolutivas.
+- [x] Fase 13: Tabla de tipos.
+  - `TypeService` + modelo `TypeChartResult`: combina uno o dos tipos
+    defensivos y calcula debilidades (x2/x4), resistencias (x0.5/x0.25),
+    inmunidades (x0) y daño normal (x1) frente a los 18 tipos del juego
+    (`/type/{type}`).
+  - Vista «Tabla de tipos» desde la AppBar (botón GRID_ON): selector de uno o
+    dos tipos y tabla visual con badges de color y multiplicadores.
 
 ## Estado
 
-Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON. Comparador de dos Pokémon (stats con barras, tipos, habilidades y evoluciones) accesible desde la AppBar.
+Detalle completo con pestañas (info, stats, evolución, movimientos, especie y media) para cualquier Pokémon, con selector de sprite, cadena evolutiva navegable y condiciones completas con tooltip. Búsqueda con debounce, caché en memoria + disco, indicador de progreso y modo offline de Pokémon visitados. La app lista generaciones en vivo desde PokeAPI: navegación por región, lista filtrable y ordenable, paginación local y detalle real al hacer click. Favoritos persistentes (estrella en el detalle y botón en la AppBar), últimos vistos e historial de búsqueda guardados localmente en JSON. Comparador de dos Pokémon (stats con barras, tipos, habilidades y evoluciones) accesible desde la AppBar. Tabla de tipos (debilidades, resistencias, inmunidades y daño normal combinando uno o dos tipos) accesible desde la AppBar.

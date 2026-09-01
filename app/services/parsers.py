@@ -15,6 +15,7 @@ from app.models.pokemon import (
     sprite_url,
 )
 from app.models.species import PokemonSpecies
+from app.models.type_chart import TypeDamages
 
 
 def parse_id_from_url(url: str | None) -> int | None:
@@ -152,6 +153,24 @@ def generation_detail_from_json(data: dict[str, Any]) -> GenerationDetail:
         id=data["id"],
         name=data["name"],
         pokemon_species=data.get("pokemon_species", []),
+    )
+
+
+def type_damages_from_json(data: dict[str, Any]) -> TypeDamages:
+    relations = data.get("damage_relations", {})
+
+    def names(key: str) -> list[str]:
+        return [
+            entry["name"]
+            for entry in relations.get(key, [])
+            if isinstance(entry, dict) and entry.get("name")
+        ]
+
+    return TypeDamages(
+        name=data.get("name", ""),
+        double_damage_from=names("double_damage_from"),
+        half_damage_from=names("half_damage_from"),
+        no_damage_from=names("no_damage_from"),
     )
 
 

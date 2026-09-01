@@ -14,6 +14,7 @@ from app.services.generation_service import GenerationService
 from app.services.local_store import LocalStore
 from app.services.pokeapi_client import PokeAPIClient
 from app.services.pokemon_service import PokemonService
+from app.services.type_service import TypeService
 from app.state.app_state import AppState
 from app.ui.theme import build_theme
 from app.ui.views.home_view import HomeView
@@ -25,11 +26,13 @@ def _build_app_bar(
     on_offline_toggle: Callable[[bool], Any] | None = None,
     on_favorites_toggle: Callable[[bool], Any] | None = None,
     on_compare_toggle: Callable[[bool], Any] | None = None,
+    on_type_chart_toggle: Callable[[bool], Any] | None = None,
 ) -> ft.AppBar:
     dark_mode = False
     offline = False
     favorites = False
     compare = False
+    type_chart = False
 
     def toggle_theme(_: Any) -> None:
         nonlocal dark_mode
@@ -55,12 +58,24 @@ def _build_app_bar(
         if on_compare_toggle:
             on_compare_toggle(compare)
 
+    def toggle_type_chart(_: Any) -> None:
+        nonlocal type_chart
+        type_chart = not type_chart
+        if on_type_chart_toggle:
+            on_type_chart_toggle(type_chart)
+
     return ft.AppBar(
         title=ft.Text(title),
         center_title=True,
         bgcolor=ft.Colors.RED_700,
         color=ft.Colors.WHITE,
         actions=[
+            ft.IconButton(
+                icon=ft.Icons.GRID_ON,
+                icon_color=ft.Colors.WHITE,
+                tooltip="Tabla de tipos",
+                on_click=toggle_type_chart,
+            ),
             ft.IconButton(
                 icon=ft.Icons.COMPARE_ARROWS,
                 icon_color=ft.Colors.WHITE,
@@ -112,6 +127,7 @@ def start(page: ft.Page) -> None:
         GenerationService(client),
         LocalStore(),
         CompareService(pokemon_service),
+        TypeService(client),
     )
     page.appbar = _build_app_bar(
         page,
@@ -119,6 +135,7 @@ def start(page: ft.Page) -> None:
         home.set_offline,
         home.set_favorites,
         home.set_compare,
+        home.set_type_chart,
     )
     page.add(home.build())
     page.run_task(home.load_initial)

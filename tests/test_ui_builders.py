@@ -6,6 +6,7 @@ import flet as ft
 
 from app.models.evolution import EvolutionChain
 from app.models.pokemon import PokemonSummary
+from app.models.type_chart import TypeDamages, combine_types
 from app.services.parsers import (
     evolution_chain_from_json,
     pokemon_detail_from_json,
@@ -21,6 +22,7 @@ from app.ui.views.detail_view import (
     build_empty_detail,
     build_pokemon_detail,
 )
+from app.ui.views.type_chart_view import _multiplier_text, build_type_chart
 
 
 def test_build_empty_detail() -> None:
@@ -174,3 +176,26 @@ def test_build_pokemon_detail_with_click_callback(
         on_pokemon_clicked=on_clicked,
     )
     assert isinstance(control.content, ft.Tabs)
+
+
+def test_build_type_chart() -> None:
+    fire = TypeDamages(
+        name="fire",
+        double_damage_from=["ground", "rock", "water"],
+        half_damage_from=["bug", "steel", "fire", "grass", "ice", "fairy"],
+        no_damage_from=[],
+    )
+    result = combine_types(["fire"], fire)
+    control = build_type_chart(result)
+    assert isinstance(control, ft.ListView)
+    assert isinstance(control.controls, list)
+    assert len(control.controls) > 0
+
+
+def test_multiplier_text_formatting() -> None:
+    assert _multiplier_text(0.0) == "Inmune"
+    assert _multiplier_text(1.0) == "Normal"
+    assert _multiplier_text(2.0) == "x2"
+    assert _multiplier_text(4.0) == "x4"
+    assert _multiplier_text(0.5) == "x0.5"
+    assert _multiplier_text(0.25) == "x0.25"

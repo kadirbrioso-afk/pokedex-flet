@@ -131,3 +131,26 @@ def test_compare_open_and_close_toggles_visibility() -> None:
     home.set_compare(False)
     assert home._compare_container.visible is False
     assert home._home_row.visible is True
+
+
+def test_type_chart_open_and_close_toggles_visibility() -> None:
+    home = _make_home()
+    home.build()
+    home.set_type_chart(True)
+    assert home._type_chart_container.visible is True
+    assert home._home_row.visible is False
+    assert home._compare_container.visible is False
+    home.set_type_chart(False)
+    assert home._type_chart_container.visible is False
+    assert home._home_row.visible is True
+
+
+def test_views_are_mutually_exclusive() -> None:
+    home = _make_home()
+    home.build()
+    home.set_compare(True)
+    assert home._type_chart_container.visible is False
+    home.set_type_chart(True)
+    assert home._compare_container.visible is False
+    assert home._type_chart_container.visible is True
+    assert home._home_row.visible is False

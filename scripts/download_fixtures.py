@@ -20,6 +20,10 @@ FIXTURES: dict[str, str] = {
     "pokemon-species_25.json": "pokemon-species/25",
     "evolution-chain_10.json": "evolution-chain/10",
     "generation_1.json": "generation/1",
+    "type_10.json": "type/10",
+    "type_11.json": "type/11",
+    "type_3.json": "type/3",
+    "type_8.json": "type/8",
 }
 
 

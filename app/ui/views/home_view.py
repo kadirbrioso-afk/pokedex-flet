@@ -17,10 +17,12 @@ from app.services.generation_service import GenerationService
 from app.services.local_store import LocalStore
 from app.services.pokeapi_client import (
     NetworkError,
+    PokeAPIClient,
     PokeAPIError,
     PokemonNotFoundError,
 )
 from app.services.pokemon_service import PokemonService
+from app.services.type_service import TypeService
 from app.state.app_state import AppState
 from app.ui.components.error_message import build_error
 from app.ui.components.loading_indicator import build_loading
@@ -28,6 +30,7 @@ from app.ui.components.pokemon_card import build_pokemon_card
 from app.ui.regions import region_name
 from app.ui.views.compare_view import CompareView
 from app.ui.views.detail_view import build_empty_detail, build_pokemon_detail
+from app.ui.views.type_chart_view import TypeChartView
 
 PAGE_SIZE = 50
 
@@ -45,6 +48,7 @@ class HomeView:
         generation_service: GenerationService,
         local_store: LocalStore | None = None,
         compare_service: CompareService | None = None,
+        type_service: TypeService | None = None,
     ) -> None:
         self._page = page
         self._state = state
@@ -140,6 +144,16 @@ class HomeView:
             expand=True,
             visible=False,
         )
+        self._type_chart = TypeChartView(
+            page,
+            type_service or TypeService(PokeAPIClient()),
+            on_close=self._close_type_chart,
+        )
+        self._type_chart_container = ft.Container(
+            content=self._type_chart.build(),
+            expand=True,
+            visible=False,
+        )
 
     def _make_begin_pick(self, side: str) -> Callable[[], Any]:
         def begin() -> None:
@@ -163,18 +177,32 @@ class HomeView:
         self.set_compare(False)
 
     def set_compare(self, on: bool) -> None:
+        if on:
+            self._pending_side = None
+        self._set_active_view(active="compare" if on else "home")
+
+    def set_type_chart(self, on: bool) -> None:
+        if on:
+            self._pending_side = None
+        self._set_active_view(active="type_chart" if on else "home")
+
+    def _close_type_chart(self) -> None:
+        self.set_type_chart(False)
+
+    def _set_active_view(self, active: str) -> None:
+        """Muestra una única vista (home, compare o type_chart) mutuamente
+        excluyente, evitando que se superpongan."""
         if self._home_row is None:
             return
-        self._pending_side = None
-        self._compare_container.visible = on
-        self._home_row.visible = not on
+        self._home_row.visible = active == "home"
+        self._compare_container.visible = active == "compare"
+        self._type_chart_container.visible = active == "type_chart"
         self._page.update()
 
     def _show_home_for_picking(self, header: str) -> None:
         if self._home_row is None:
             return
-        self._compare_container.visible = False
-        self._home_row.visible = True
+        self._set_active_view(active="home")
         self._header_text.value = header
         self._page.update()
 
@@ -211,7 +239,7 @@ class HomeView:
         )
         self._home_row.visible = not self._compare_container.visible
         return ft.Stack(
-            [self._home_row, self._compare_container],
+            [self._home_row, self._compare_container, self._type_chart_container],
             expand=True,
         )
 
